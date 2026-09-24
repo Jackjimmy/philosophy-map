@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  西方哲学思想地图 · 修订版 v3
+  修订：Claude（Anthropic，Opus 5.5）· 2026-09
+  基于原稿《哲学思想地图.html》，原稿保持不变。
+  v3：重排布局（英美 | 中轴 | 欧陆 × 时间）、入门/完整分层、争论对照、术语表
+-->
+<title>西方哲学思想地图 · 修订版</title>
+<style>
+  :root{
+    --bg:#0d1017; --ink:#e9e4d8; --dim:#8a93a6; --gold:#dfa04e;
+    --card:rgba(16,20,31,.97); --line:#242b3b; --field:#161b28; --soft:#1a2030;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:radial-gradient(1200px 800px at 50% 40%, #141927 0%, var(--bg) 70%);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  svg#map{display:block;width:100vw;height:100vh;cursor:grab}
+  svg#map:active{cursor:grabbing}
+  button{font-family:inherit}
+  .serif{font-family:"Songti SC","STSong","Noto Serif SC",serif}
+
+  #header{position:fixed;top:22px;left:28px;pointer-events:none;z-index:5}
+  #header h1{font-family:"Songti SC","STSong","Noto Serif SC",serif;font-size:30px;font-weight:700;letter-spacing:6px}
+  #header p{margin-top:6px;font-size:13px;color:var(--dim);letter-spacing:2px}
+
+  #toolbar{position:fixed;top:26px;right:28px;z-index:6;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  #search{
+    width:150px;padding:8px 12px;border-radius:20px;border:1px solid #2c3446;
+    background:var(--field);color:var(--ink);font-size:13px;outline:none;
+  }
+  #search:focus{border-color:var(--gold)}
+  .pill{
+    padding:8px 14px;border-radius:18px;border:1px solid #2c3446;
+    background:var(--field);color:var(--ink);font-size:12px;cursor:pointer;letter-spacing:1px;white-space:nowrap;
+  }
+  .pill:hover,.pill.on{border-color:var(--gold);color:var(--gold)}
+  .seg{display:flex;border:1px solid #2c3446;border-radius:18px;overflow:hidden;background:var(--field)}
+  .seg button{border:none;background:none;color:var(--dim);font-size:12px;padding:8px 12px;cursor:pointer;letter-spacing:1px;white-space:nowrap}
+  .seg button.on{background:#2a2418;color:var(--gold)}
+  .dd{position:relative}
+  .menu{
+    position:absolute;top:42px;right:0;width:300px;display:none;max-height:70vh;overflow-y:auto;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px;
+  }
+  .menu.open{display:block}
+  .menu .ti{padding:10px 12px;border-radius:8px;cursor:pointer}
+  .menu .ti:hover{background:var(--soft)}
+  .menu .ti b{font-size:13px}
+  .menu .ti div{font-size:11px;color:var(--dim);margin-top:3px;line-height:1.6}
+
+  #legend{
+    position:fixed;left:28px;bottom:24px;z-index:5;
+    background:rgba(18,22,34,.88);border:1px solid var(--line);border-radius:10px;
+    padding:12px 16px;font-size:11px;line-height:1.9;backdrop-filter:blur(6px);
+  }
+  #legend .lg-title{color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:4px}
+  #legend .lg-row{display:flex;gap:6px;flex-wrap:wrap}
+  #legend .lg-row span[data-type]{cursor:pointer;padding:0 6px;border-radius:6px;user-select:none}
+  #legend .lg-row span[data-type]:hover{background:#1f2636}
+  #legend .lg-row span.off{opacity:.3;text-decoration:line-through}
+  #legend .lg-note{color:var(--dim);font-size:10px;line-height:1.6;margin-top:2px}
+  #legend .sw{display:inline-block;width:22px;height:0;vertical-align:middle;margin-right:5px}
+  #legend .sw.inherit{border-top:2px solid #69c07a}
+  #legend .sw.critique{border-top:2px dashed #e05a5a}
+  #legend .sw.transform{border-top:3px solid #e8963c}
+  #legend .sw.influence{border-top:1.5px solid #8a93a6}
+  #legend .sw.resonance{border-top:2px dotted #7a8db0}
+  #legend .camps{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+  #legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
+  #legend-toggle{display:none}
+
+  #timebar{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:5;
+    display:flex;align-items:center;gap:10px;
+    background:rgba(18,22,34,.88);border:1px solid var(--line);border-radius:22px;
+    padding:6px 14px 6px 6px;backdrop-filter:blur(6px);
+  }
+  #play{width:30px;height:30px;border-radius:50%;border:1px solid #2c3446;background:var(--field);color:var(--gold);cursor:pointer;font-size:11px}
+  #year{width:260px;accent-color:var(--gold)}
+  #year-label{font-size:12px;color:var(--ink);min-width:62px;letter-spacing:1px}
+  #reset{position:fixed;right:28px;bottom:24px;z-index:5}
+
+  /* ---- 人物面板（右） ---- */
+  #panel{
+    position:fixed;top:0;right:0;bottom:0;width:360px;z-index:10;
+    background:var(--card);border-left:1px solid var(--line);
+    transform:translateX(105%);transition:transform .35s ease;
+    padding:26px 26px 40px;overflow-y:auto;backdrop-filter:blur(10px);
+  }
+  #panel.open{transform:translateX(0)}
+  .x{position:absolute;top:14px;right:16px;border:none;background:none;color:var(--dim);font-size:22px;cursor:pointer;z-index:2}
+  .x:hover{color:var(--ink)}
+  .p-head{display:flex;gap:16px;align-items:center;margin-bottom:4px}
+  .av{width:72px;height:72px;border-radius:50%;object-fit:cover;object-position:top;border:3px solid #2c3446;flex-shrink:0;background:var(--soft)}
+  .av-mono{display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:600;color:#fff}
+  .p-camp{display:inline-block;padding:2px 10px;border-radius:11px;font-size:10px;color:#0d1017;font-weight:600;letter-spacing:2px;margin-bottom:8px}
+  #panel h2{font-family:"Songti SC","STSong",serif;font-size:26px;letter-spacing:3px}
+  .p-en{color:var(--dim);font-size:12px;margin-top:5px}
+  #panel h3{margin:20px 0 8px;font-size:13px;color:var(--gold);letter-spacing:3px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  .p-q{
+    margin-top:16px;padding:12px 14px;border-left:3px solid var(--gold);background:var(--soft);
+    border-radius:0 8px 8px 0;font-size:14px;line-height:1.8;font-family:"Songti SC","STSong","Noto Serif SC",serif;
+  }
+  .p-q small{display:block;font-family:-apple-system,"PingFang SC",sans-serif;font-size:10px;color:var(--dim);letter-spacing:2px;margin-bottom:4px}
+  #panel ul{list-style:none}
+  #panel ul li{font-size:13px;line-height:1.9;padding-left:14px;position:relative}
+  #panel ul li::before{content:"·";position:absolute;left:0;color:var(--gold)}
+  #panel ul li.w{color:#b8c0d0}
+  .sub{font-size:11px;color:var(--dim);letter-spacing:2px;margin:12px 0 6px}
+  .rel{padding:9px 10px;border-radius:8px;margin-bottom:8px;cursor:pointer;background:var(--soft);border:1px solid transparent;font-size:13px;line-height:1.6}
+  .rel:hover{border-color:#4a5470}
+  .rel .tag{float:right;font-size:10px;border:1px solid;border-radius:8px;padding:1px 7px;margin-left:6px}
+  .note{color:var(--dim);font-size:12px;margin-top:5px;line-height:1.7}
+  .pathfind{display:flex;gap:8px}
+  .pathfind select{flex:1;padding:7px 8px;border-radius:8px;border:1px solid #2c3446;background:var(--field);color:var(--ink);font-size:13px}
+  .step{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;line-height:1.6}
+  .step .n{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--gold);color:#0d1017;font-size:11px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .step b{cursor:pointer}
+  .step b:hover{color:var(--gold)}
+  .links a{color:#9fb3d9;font-size:12px;margin-right:14px;text-decoration:none}
+  .links a:hover{color:var(--gold)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:14px;cursor:pointer;
+    background:var(--soft);border:1px solid #2c3446;font-size:12px;line-height:1.5;
+  }
+  .chip:hover{border-color:var(--gold);color:var(--gold)}
+  .chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .chip.t{border-style:dashed}
+  .chip small{color:var(--dim);font-size:10px}
+
+  /* 行内术语 */
+  .term{border-bottom:1px dotted var(--gold);cursor:help}
+  .term:hover{color:var(--gold)}
+
+  /* ---- 术语表（左） ---- */
+  #glossary{
+    position:fixed;top:0;left:0;bottom:0;width:400px;z-index:11;
+    background:var(--card);border-right:1px solid var(--line);
+    transform:translateX(-105%);transition:transform .35s ease;
+    display:flex;flex-direction:column;backdrop-filter:blur(10px);
+  }
+  #glossary.open{transform:translateX(0)}
+  .g-top{padding:24px 24px 10px;border-bottom:1px solid var(--line)}
+  .g-top h2{font-family:"Songti SC","STSong",serif;font-size:24px;letter-spacing:4px}
+  .g-top p{font-size:12px;color:var(--dim);line-height:1.7;margin:6px 0 12px}
+  #g-search{width:100%;padding:8px 12px;border-radius:8px;border:1px solid #2c3446;background:var(--field);color:var(--ink);font-size:13px;outline:none}
+  #g-search:focus{border-color:var(--gold)}
+  #g-cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  #g-cats span{font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid #2c3446;cursor:pointer;color:var(--dim)}
+  #g-cats span.on{color:var(--gold);border-color:var(--gold)}
+  #g-list{flex:1;overflow-y:auto;padding:8px 14px 40px}
+  .g-cat-title{font-size:11px;color:var(--gold);letter-spacing:3px;margin:16px 10px 6px}
+  .g-item{padding:10px 12px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+  .g-item:hover{background:var(--soft)}
+  .g-item.open{background:var(--soft);border-color:#3a3320;cursor:default}
+  .g-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .g-head b{font-size:15px;font-family:"Songti SC","STSong",serif;letter-spacing:1px}
+  .g-o{font-size:11px;color:var(--dim);font-style:italic}
+  .g-b{font-size:12.5px;color:#cfd4de;line-height:1.7;margin-top:3px}
+  .g-d{font-size:13px;line-height:1.9;margin-top:8px;color:#dfe3ea}
+  .g-lab{font-size:10px;color:var(--dim);letter-spacing:2px;margin:10px 0 6px}
+
+  /* ---- 导览卡 ---- */
+  #tour-card{
+    position:fixed;z-index:9;bottom:80px;left:50%;transform:translateX(-50%);
+    width:min(460px, calc(100vw - 32px));display:none;
+    background:var(--card);border:1px solid #3a3320;border-radius:12px;padding:16px 18px;box-shadow:0 10px 40px rgba(0,0,0,.5);
+  }
+  #tour-card.open{display:block}
+  #tour-card .tc-top{display:flex;justify-content:space-between;font-size:11px;color:var(--gold);letter-spacing:2px}
+  #tour-card .tc-name{font-family:"Songti SC","STSong",serif;font-size:20px;margin:8px 0 6px;letter-spacing:2px}
+  #tour-card .tc-text{font-size:13px;line-height:1.9;color:#cfd4de}
+  .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+  #tour-card .dots{display:flex;gap:4px;margin-top:10px}
+  #tour-card .dots i{width:14px;height:3px;border-radius:2px;background:#2c3446}
+  #tour-card .dots i.on{background:var(--gold)}
+
+  #tooltip{
+    position:fixed;z-index:40;pointer-events:none;display:none;
+    background:var(--card);border:1px solid #2c3446;border-radius:8px;
+    padding:10px 14px;font-size:12px;max-width:300px;line-height:1.7;
+  }
+  #tooltip .tt-head{font-size:13px;margin-bottom:4px}
+
+  /* ---- 弹窗 ---- */
+  .overlay{position:fixed;inset:0;z-index:30;background:rgba(5,7,12,.72);display:none;align-items:center;justify-content:center;padding:16px}
+  .overlay.open{display:flex}
+  .overlay .box{
+    width:min(620px,100%);max-height:88vh;overflow-y:auto;background:#121724;border:1px solid var(--line);
+    border-radius:14px;padding:26px 28px;font-size:13px;line-height:1.9;position:relative;
+  }
+  .overlay .box.wide{width:min(940px,100%)}
+  #about h2{font-family:"Songti SC","STSong",serif;font-size:22px;letter-spacing:3px;margin-bottom:6px}
+  #about h4{color:var(--gold);font-size:12px;letter-spacing:3px;margin:16px 0 4px}
+  #about ol,#about ul{padding-left:20px;color:#cfd4de}
+  #about .sig{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+
+  .db-kicker{font-size:11px;color:var(--gold);letter-spacing:3px}
+  .db-title{font-family:"Songti SC","STSong",serif;font-size:24px;letter-spacing:3px;margin:4px 0 10px}
+  .db-q{font-family:"Songti SC","STSong",serif;font-size:17px;line-height:1.7;padding:12px 16px;background:var(--soft);border-radius:10px;margin-bottom:16px}
+  .db-cols{display:grid;grid-template-columns:1fr 44px 1fr;gap:0}
+  .db-side{background:#161c2a;border-radius:12px;padding:16px 18px;border-top:3px solid}
+  .db-who{display:flex;gap:12px;align-items:center;margin-bottom:10px;cursor:pointer}
+  .db-who .av{width:52px;height:52px;border-width:2px}
+  .db-who .av-mono{font-size:20px}
+  .db-who b{font-family:"Songti SC","STSong",serif;font-size:19px;letter-spacing:2px}
+  .db-who span{display:block;font-size:11px;color:var(--dim)}
+  .db-claim{font-size:14px;line-height:1.8;font-weight:600;margin-bottom:8px}
+  .db-side ul{padding-left:18px;color:#cfd4de;font-size:13px;line-height:1.85}
+  .db-vs{display:flex;align-items:center;justify-content:center;color:var(--gold);font-family:"Songti SC",serif;font-size:18px;letter-spacing:1px}
+  .db-box{margin-top:14px;padding:12px 16px;border-radius:10px;background:var(--soft);font-size:13px;line-height:1.85}
+  .db-box b{display:block;font-size:11px;letter-spacing:3px;color:var(--gold);margin-bottom:2px}
+  .db-box.think{border:1px dashed #3a3320;background:none}
+
+  /* ---- 图元素 ---- */
+  .band{stroke:#20263a;stroke-width:1}
+  .band-label{fill:#39415a;font-size:22px;letter-spacing:4px;font-family:"Songti SC","STSong",serif}
+  .trad{font-family:"Songti SC","STSong",serif;fill:#566079;font-size:30px;letter-spacing:8px;text-anchor:middle}
+  .trad-sub{fill:#454e66;font-size:14px;letter-spacing:3px;text-anchor:middle}
+  .trad-axis{stroke:#2a3146;stroke-width:1.5}
+  .now-line{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:4 6;opacity:.6}
+  .now-label{fill:var(--gold);font-size:18px;letter-spacing:2px;opacity:.8}
+  .camp-label{font-family:"Songti SC","STSong",serif;font-size:22px;letter-spacing:4px;text-anchor:middle;paint-order:stroke;stroke:#0d1017;stroke-width:6px}
+  .lane-label{font-size:12px;letter-spacing:2px;text-anchor:middle;fill:#6f7890;paint-order:stroke;stroke:#0d1017;stroke-width:4px}
+  .link{fill:none;cursor:pointer}
+  .link.hl{opacity:1 !important}
+  .node{cursor:pointer;transition:opacity .35s}
+  .node .mono{font-size:18px;font-weight:600;fill:#fff;text-anchor:middle;dominant-baseline:central;opacity:.92}
+  .node text.lbl{font-size:15px;fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:#0d1017;stroke-width:5px;stroke-linejoin:round}
+  .node text.yrs{font-size:10px;fill:var(--dim);text-anchor:middle;paint-order:stroke;stroke:#0d1017;stroke-width:4px;stroke-linejoin:round}
+  .node.hl .ring{stroke:#fff !important;stroke-width:4}
+  .node .halo{fill:none;stroke:var(--gold);stroke-width:2;opacity:0}
+  .node.visited .halo{opacity:.9}
+  svg.focused .node.dim{opacity:.12}
+  svg.focused .region-wrap{opacity:.35}
+  svg .node.gone, svg.focused .node.gone{opacity:0 !important;pointer-events:none}
+  svg .node.future, svg.focused .node.future{opacity:.05 !important;pointer-events:none}
+  body.touring #legend{display:none}
+
+  @media (max-width:1180px){
+    #header p{display:none}
+    #toolbar{top:66px;left:28px;right:28px;justify-content:flex-start}
+  }
+  @media (max-width:760px){
+    #header{top:14px;left:16px}
+    #header h1{font-size:20px;letter-spacing:3px}
+    #toolbar{top:46px;left:16px;right:16px;gap:6px}
+    #search{width:100px}
+    .pill,.seg button{padding:6px 10px;font-size:11px}
+    .menu{left:0;right:auto;width:calc(100vw - 32px)}
+    #legend{display:none;left:16px;right:16px;bottom:70px}
+    #legend.open{display:block}
+    #legend-toggle{display:inline-block}
+    #timebar{bottom:14px;left:16px;right:16px;transform:none;padding-right:10px}
+    #year{flex:1;width:auto}
+    #reset{display:none}
+    #panel{top:auto;left:0;width:100%;height:58vh;border-left:none;border-top:1px solid var(--line);border-radius:14px 14px 0 0;transform:translateY(105%)}
+    #panel.open{transform:translateY(0)}
+    #glossary{width:100%;z-index:12}
+    #tour-card{top:124px;bottom:auto}
+    .db-cols{grid-template-columns:1fr}
+    .db-vs{padding:8px 0}
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>西方哲学思想地图</h1>
+  <p>近代 → 当代 · 左英美 / 中德国古典 / 右欧陆 · 纵轴为时间</p>
+</div>
+
+<div id="toolbar">
+  <input id="search" list="names" placeholder="搜索哲学家…" autocomplete="off">
+  <datalist id="names"></datalist>
+  <div class="seg" id="mode"></div>
+  <div class="dd"><button class="pill" id="tour-btn">专题导览</button><div class="menu" id="tour-menu"></div></div>
+  <div class="dd"><button class="pill" id="debate-btn">争论对照</button><div class="menu" id="debate-menu"></div></div>
+  <button class="pill" id="gloss-btn">术语表</button>
+  <button class="pill" id="legend-toggle">图例</button>
+  <button class="pill" id="about-btn">如何阅读</button>
+</div>
+
+<div id="legend">
+  <div class="lg-title">关系类型（点击可筛选）</div>
+  <div class="lg-row" id="legend-rel"></div>
+  <div class="lg-note">箭头 A → B：B 承接或回应了 A · 阵营名称直接标在地图上</div>
+</div>
+
+<div id="timebar">
+  <button id="play" title="播放思想史">▶</button>
+  <input type="range" id="year" min="1580" max="2030" step="1" value="2030">
+  <span id="year-label">全部年代</span>
+</div>
+<button class="pill" id="reset">重置视图</button>
+
+<div id="panel"><button class="x" id="panel-close">×</button><div id="panel-content"></div></div>
+
+<div id="glossary">
+  <button class="x" id="gloss-close">×</button>
+  <div class="g-top">
+    <h2>术语表</h2>
+    <p>读西方哲学，最常卡住的是术语。点开一个术语，会看到白话解释和相关哲学家，地图上也会高亮这些人。正文中带虚线下划线的词都可以点。</p>
+    <input id="g-search" placeholder="搜索术语、原文或哲学家…" autocomplete="off">
+    <div id="g-cats"></div>
+  </div>
+  <div id="g-list"></div>
+</div>
+
+<div id="tour-card"></div>
+<div id="tooltip"></div>
+
+<div id="debate" class="overlay"><div class="box wide"><button class="x" data-close>×</button><div id="debate-content"></div></div></div>
+
+<div id="about" class="overlay">
+  <div class="box">
+    <button class="x" data-close>×</button>
+    <h2>如何阅读这张地图</h2>
+    <ol>
+      <li><b>左边是英美传统，右边是欧陆传统，中间是德国古典哲学。</b>最上面是 17 世纪的两条源流：左边的经验论，右边的唯理论。两条线在中间的康德那里汇合，然后向下分出三股：往左是分析哲学与实用主义，中轴往下是黑格尔到马克思主义，往右是现象学、存在主义、结构主义与精神分析。政治哲学单独占一列，位于英美传统与中轴之间。</li>
+      <li><b>越往下越接近当代。</b>时间轴是非线性的：17–18 世纪被压缩，20 世纪被拉伸。每个阵营内部还按主题分成几条细列，列顶有小标题。</li>
+      <li><b>箭头表示思想的流向。</b>A → B 表示 B 承接或回应了 A。点击图例可以只看某几种关系。</li>
+      <li><b>第一次来，先用“入门”模式。</b>只显示 30 位核心人物，框架清楚后再切换到“完整”。</li>
+      <li><b>先看“他在追问”，再看答案。</b>遇到带虚线的术语就点开，术语表会解释它，并告诉你还有谁用过它。</li>
+      <li><b>“专题导览”</b>沿一条线索一站站讲；<b>“争论对照”</b>把两位对手并排放在一起比较。争论往往是理解一种立场最快的入口。</li>
+      <li>拖动或播放底部时间轴，可以看思想史如何展开；在人物面板里用“追溯思想路径”，可以查看任意两人之间的联系。</li>
+    </ol>
+    <h4>关于内容</h4>
+    <ul>
+      <li>人物概述、术语解释、争论梳理和关系注释都是自行撰写的概括，参考了通行的哲学史教材和公开百科的观点，没有照搬原文。</li>
+      <li>“继承 / 批判 / 转化”等标签是对复杂思想关系的简化，适合入门搭框架，不能替代原著和专业研究。</li>
+      <li>头像只使用公有领域或自由授权（CC 等）的图片，作者与授权见仓库中的 avatars/CREDITS.md。</li>
+    </ul>
+    <h4>修订说明</h4>
+    <ul>
+      <li>v3：按“英美 | 中轴 | 欧陆 × 时间”重排默认布局，阵营内按主题分列；新增入门/完整分层、8 组争论对照、约 80 条术语的术语表（与人物双向关联，正文术语可点）</li>
+      <li>v2：补充人物与关系，新增“他在追问”、专题导览、时间轴、关系筛选、思想路径等</li>
+    </ul>
+    <div class="sig">修订：Claude（Anthropic · Opus 5.5）· 2026 年 9 月<br>基于原稿《哲学思想地图.html》，原稿保持不变。</div>
+  </div>
+</div>
+
+<svg id="map"></svg>
+
+<script src="d3.v7.min.js"></script>
+<script src="avatars/manifest.js"></script>
+<script>
+const AVATARS = window.AVATARS || {};
+/* ==================== 配置 ==================== */
+const CAMP = {
+  empirical:  {name:'经验论',     color:'#7c93b8', label:'近代经验论'},
+  rational:   {name:'唯理论',     color:'#a9b6de', label:'近代唯理论'},
+  political:  {name:'政治哲学',   color:'#d9826b', label:'政治哲学'},
+  german:     {name:'德国古典',   color:'#9d8bd4', label:'德国古典哲学'},
+  marxism:    {name:'西马·批判',  color:'#d45a68', label:'马克思主义·社会批判'},
+  existential:{name:'生存·现象',  color:'#e3b34e', label:'生存哲学·现象学'},
+  structure:  {name:'结构·后现代',color:'#5dbcd2', label:'结构主义·后结构主义'},
+  psycho:     {name:'精神分析',   color:'#d17fb0', label:'精神分析'},
+  analytic:   {name:'分析·实用',  color:'#58b09c', label:'分析哲学·实用主义'},
+};
+const REL = {
+  inherit:  {name:'继承', color:'#69c07a', width:1.6, dash:null},
+  critique: {name:'批判', color:'#e05a5a', width:1.4, dash:'6 4'},
+  transform:{name:'转化', color:'#e8963c', width:2.2, dash:null},
+  influence:{name:'影响', color:'#8a93a6', width:1,   dash:null},
+  resonance:{name:'呼应', color:'#7a8db0', width:1,   dash:'2 5'},
+};
+const VERB = {
+  inherit:  (s,t)=>`${t} 继承了 ${s}`,
+  critique: (s,t)=>`${t} 批判了 ${s}`,
+  transform:(s,t)=>`${t} 改造转化了 ${s}`,
+  influence:(s,t)=>`${s} 影响了 ${t}`,
+  resonance:(s,t)=>`${s} 与 ${t} 遥相呼应`,
+};
+const relSentence = l => VERB[l.type](`<b data-id="${l.source.id}">${l.source.name}</b>`, `<b data-id="${l.target.id}">${l.target.name}</b>`);
+
+/* 入门模式：30 位核心人物 */
+const CORE = new Set(['descartes','spinoza','locke','hume','hobbes','rousseau','mill','rawls','arendt',
+  'kant','hegel','marx','adorno','schopenhauer','kierkegaard','nietzsche','husserl','heidegger','sartre','beauvoir',
+  'freud','saussure','foucault','derrida','james','frege','russell','wittgenstein','popper','kuhn']);
+
+/* ==================== 布局：x = 传统中的位置（按主题细分为列），y = 时间 ==================== */
+/* 左：英美（实用主义 | 逻辑语言 | 逻辑实证 | 科学哲学 | 心灵）  中：政治 · 德国古典→马克思主义  右：唯理论→生存现象 · 结构 · 精神分析 */
+const POS = {
+  peirce:100, james:170, dewey:100, rorty:120,
+  frege:240, russell:240, wittgenstein:240, kripke:240,
+  vienna:350, quine:350, davidson:350,
+  popper:460, kuhn:460,
+  putnam:560, searle:660, dennett:560, chalmers:660,
+  berkeley:280, locke:400, hume:520,
+  hobbes:860, rousseau:860, wollstonecraft:790, mill:860, arendt:860, rawls:800, nozick:920,
+  kant:1100, fichte:1010, schelling:1190, hegel:1100, feuerbach:1100,
+  marx:1100, lukacs:1040, gramsci:1160, benjamin:1040, adorno:1160, marcuse:1040, althusser:1160, habermas:1100,
+  spinoza:1300, descartes:1420, leibniz:1540,
+  schopenhauer:1300, nietzsche:1300, bergson:1300, camus:1300,
+  kierkegaard:1420, sartre:1420, beauvoir:1440,
+  husserl:1540, heidegger:1540, gadamer:1540,
+  merleau:1650, levinas:1650,
+  deleuze:1760, butler:1760,
+  derrida:1870, lyotard:1870,
+  saussure:1980, levistrauss:1980, foucault:1980,
+  barthes:2090, baudrillard:2090,
+  freud:2230, lacan:2230, jung:2340, zizek:2340,
+};
+const OX = 80;
+/* 细列小标题：[文字, x, 起始年代] */
+const LANES = [
+  ['实用主义',135,1878],['逻辑·语言',240,1879],['逻辑实证·语义',350,1929],['科学哲学',460,1934],['心灵哲学',610,1975],
+  ['意志·生命·荒诞',1300,1818],['存在主义',1420,1843],['现象学·解释学',1540,1900],['身体·他者',1650,1945],
+  ['结构主义',1980,1916],['后结构主义',1815,1967],['符号与消费',2090,1957],
+];
+/* 大传统标题：[文字, 副标题, x] */
+const TRADS = [
+  ['英美传统','经验 · 逻辑 · 语言 · 科学',390],
+  ['中轴','政治哲学 · 德国古典 → 马克思主义',980],
+  ['欧陆传统','理性 · 生存 · 结构 · 无意识',1800],
+];
+
+/* ==================== 人物数据 ==================== */
+const NODES = [
+ {id:'hobbes', name:'霍布斯', en:'Thomas Hobbes', years:'1588–1679', camp:'political', imp:4, year:1651,
+  q:'没有国家的时候，人会过怎样的生活？我们为什么要服从权力？',
+  ideas:['自然状态是“一切人对一切人的战争”','社会契约：以自由换取利维坦的秩序','机械唯物主义的国家理论'],
+  works:['《论公民》(1642)','《利维坦》(1651)']},
+ {id:'descartes', name:'笛卡尔', en:'René Descartes', years:'1596–1650', camp:'rational', imp:4, year:1641,
+  q:'有什么东西是绝对无法怀疑的？知识能否建立在确定的地基上？',
+  ideas:['“我思故我在”：以普遍怀疑找到不可怀疑的阿基米德点','心物二元论：思维实体与广延实体分立','唯理论奠基：知识源于天赋观念与演绎'],
+  works:['《谈谈方法》(1637)','《第一哲学沉思集》(1641)','《哲学原理》(1644)']},
+ {id:'spinoza', name:'斯宾诺莎', en:'Baruch Spinoza', years:'1632–1677', camp:'rational', imp:3, year:1677,
+  q:'如果神就是自然本身，人该如何理解自由与幸福？',
+  ideas:['实体一元论：神即自然（Deus sive Natura）','以几何学方式演绎伦理学','自由是对必然的认识'],
+  works:['《神学政治论》(1670)','《伦理学》(1677)']},
+ {id:'locke', name:'洛克', en:'John Locke', years:'1632–1704', camp:'empirical', imp:3.5, year:1689,
+  q:'心灵最初是一张白纸吗？知识和政治权力的正当来源是什么？',
+  ideas:['白板说：心灵本无内容，一切知识来自经验','批判天赋观念论','经验论与政治自由主义的双重奠基人：自然权利与有限政府'],
+  works:['《人类理解论》(1689)','《政府论》(1689)']},
+ {id:'berkeley', name:'贝克莱', en:'George Berkeley', years:'1685–1753', camp:'empirical', imp:3, year:1710,
+  q:'离开了感知，“物质”这个词还有意义吗？',
+  ideas:['“存在即被感知”','否定物质实体：事物是观念的集合','经验论向观念论的转折'],
+  works:['《人类知识原理》(1710)','《海拉斯与斐洛诺斯的对话》(1713)']},
+ {id:'leibniz', name:'莱布尼茨', en:'G.W. Leibniz', years:'1646–1716', camp:'rational', imp:3, year:1714,
+  q:'世界最终由什么构成？万物为什么能彼此协调？',
+  ideas:['单子论：世界由无数“无窗的”精神单子构成','预定和谐论','普遍符号语言的构想，分析哲学的遥远先声'],
+  works:['《神正论》(1710)','《单子论》(1714)']},
+ {id:'rousseau', name:'卢梭', en:'Jean-Jacques Rousseau', years:'1712–1778', camp:'political', imp:4.5, year:1762,
+  q:'文明让人更自由了，还是给人套上了枷锁？',
+  ideas:['“人生而自由，却无往不在枷锁之中”','公意（volonté générale）与人民主权','私有制是人类不平等的起源'],
+  works:['《论人类不平等的起源》(1755)','《社会契约论》(1762)','《爱弥儿》(1762)']},
+ {id:'hume', name:'休谟', en:'David Hume', years:'1711–1776', camp:'empirical', imp:4, year:1748,
+  q:'我们凭什么相信因果、归纳，以及“应当”？',
+  ideas:['彻底的经验论：一切观念皆源于印象','因果只是“习惯性联想”，动摇了归纳与科学的基础','“是”与“应当”的二分（事实/价值）'],
+  works:['《人性论》(1739)','《人类理解研究》(1748)']},
+ {id:'wollstonecraft', name:'沃斯通克拉夫特', en:'Mary Wollstonecraft', years:'1759–1797', camp:'political', imp:3, year:1792,
+  q:'女性的“不如男性”，是天性使然，还是被剥夺教育的结果？',
+  ideas:['女性的“低下”源于教育的剥夺，而非天性','理性与美德不分性别','启蒙自由主义中女性主义的起点'],
+  works:['《女权辩护》(1792)']},
+ {id:'kant', name:'康德', en:'Immanuel Kant', years:'1724–1804', camp:'german', imp:5, year:1781,
+  q:'我能认识什么？我应当做什么？我可以希望什么？',
+  ideas:['“哥白尼式革命”：人为自然立法','先天综合判断：调和唯理论与经验论','物自体不可知，知识止于现象','三大批判为真、善、美奠基'],
+  works:['《纯粹理性批判》(1781)','《实践理性批判》(1788)','《判断力批判》(1790)']},
+ {id:'fichte', name:'费希特', en:'Johann Gottlieb Fichte', years:'1762–1814', camp:'german', imp:3, year:1794,
+  q:'如果取消“物自体”，知识的一切能否从“自我”推出？',
+  ideas:['知识学：自我设定自身，并设定非我','取消物自体，把康德哲学推向主观唯心论','行动优先：自我首先是活动而非事物'],
+  works:['《全部知识学的基础》(1794)','《对德意志民族的演讲》(1808)']},
+ {id:'schelling', name:'谢林', en:'F.W.J. Schelling', years:'1775–1854', camp:'german', imp:3, year:1800,
+  q:'自然与精神、客体与主体，是否本来就是同一的？',
+  ideas:['自然哲学：自然是“可见的精神”','同一哲学：主客体在绝对中无差别','艺术是哲学的最高表达','晚期“积极哲学”影响了克尔凯郭尔等人'],
+  works:['《先验唯心论体系》(1800)','《论人类自由的本质》(1809)']},
+ {id:'hegel', name:'黑格尔', en:'G.W.F. Hegel', years:'1770–1831', camp:'german', imp:4.5, year:1807,
+  q:'真理如何在历史中一步步展开、实现它自身？',
+  ideas:['辩证法：概念通过自我否定而运动、上升（常被概括为“正—反—合”，但这并非黑格尔本人的术语）','绝对精神：历史是自由意识的展开','主奴辩证法：承认的斗争'],
+  works:['《精神现象学》(1807)','《逻辑学》(1812)','《法哲学原理》(1821)']},
+ {id:'feuerbach', name:'费尔巴哈', en:'Ludwig Feuerbach', years:'1804–1872', camp:'german', imp:3, year:1841,
+  q:'人所崇拜的神，会不会只是人自身本质的投影？',
+  ideas:['神学的秘密是人本学：上帝是人本质的异化投射','以感性的、具体的人批判黑格尔的思辨哲学','青年黑格尔派通往马克思的桥梁'],
+  works:['《基督教的本质》(1841)','《未来哲学原理》(1843)']},
+ {id:'schopenhauer', name:'叔本华', en:'Arthur Schopenhauer', years:'1788–1860', camp:'existential', imp:4, year:1818,
+  q:'表象背后驱动一切的是什么？人生为何充满痛苦？',
+  ideas:['世界是“意志与表象”：盲目的生命意志是万物本质','人生在痛苦与无聊之间摆动（悲观主义）','艺术（尤其音乐）与禁欲是暂时的解脱'],
+  works:['《作为意志和表象的世界》(1818)','《附录与补遗》(1851)']},
+ {id:'kierkegaard', name:'克尔凯郭尔', en:'Søren Kierkegaard', years:'1813–1855', camp:'existential', imp:3.5, year:1843,
+  q:'面对庞大的哲学体系，一个具体的人如何选择、如何信仰？',
+  ideas:['反对黑格尔体系：真理即主体性','人生三阶段：审美—伦理—宗教','“信仰之跃”与“畏”的概念','存在主义的先驱'],
+  works:['《非此即彼》(1843)','《恐惧与战栗》(1843)','《致死的疾病》(1849)']},
+ {id:'nietzsche', name:'尼采', en:'Friedrich Nietzsche', years:'1844–1900', camp:'existential', imp:5, year:1883,
+  q:'传统价值崩塌之后，人还能凭什么活下去？',
+  ideas:['权力意志：将叔本华的生命意志转为肯定与创造','“上帝已死”：重估一切价值','超人与永恒轮回','主人道德与奴隶道德的谱系学'],
+  works:['《悲剧的诞生》(1872)','《查拉图斯特拉如是说》(1883)','《论道德的谱系》(1887)']},
+ {id:'bergson', name:'柏格森', en:'Henri Bergson', years:'1859–1941', camp:'existential', imp:3.5, year:1907,
+  q:'在被钟表切碎之前，真正的时间是什么样子？',
+  ideas:['绵延（durée）：真正的时间是活生生的体验','生命冲动（élan vital）的创造进化','直觉高于理智'],
+  works:['《时间与自由意志》(1889)','《创造进化论》(1907)']},
+ {id:'husserl', name:'胡塞尔', en:'Edmund Husserl', years:'1859–1938', camp:'existential', imp:4, year:1900,
+  q:'如何不带任何预设，描述事物在意识中的显现？',
+  ideas:['现象学：“回到事情本身”','悬搁（epoché）与本质还原','意向性：意识总是关于某物的意识'],
+  works:['《逻辑研究》(1900)','《纯粹现象学通论》(1913)']},
+ {id:'heidegger', name:'海德格尔', en:'Martin Heidegger', years:'1889–1976', camp:'existential', imp:4.5, year:1927,
+  q:'“存在”究竟意味着什么？我们为何遗忘了这个问题？',
+  ideas:['此在（Dasein）与存在论差异','向死而生、烦、沉沦；“畏”揭示本真的可能','后期：技术是“座架”，语言是存在之家'],
+  works:['《存在与时间》(1927)','《林中路》(1950)']},
+ {id:'merleau', name:'梅洛-庞蒂', en:'Maurice Merleau-Ponty', years:'1908–1961', camp:'existential', imp:3.5, year:1945,
+  q:'我们首先是用身体，而不是用头脑，在认识世界吗？',
+  ideas:['身体现象学：身体本身即是知觉的主体','知觉的首要性','“肉身”与交错（chiasme）的本体论'],
+  works:['《知觉现象学》(1945)','《可见的与不可见的》(遗著)']},
+ {id:'gadamer', name:'伽达默尔', en:'Hans-Georg Gadamer', years:'1900–2002', camp:'existential', imp:3.5, year:1960,
+  q:'当我们理解一个文本、一段历史时，究竟发生了什么？',
+  ideas:['哲学解释学：理解的历史性','视域融合：过去与当下的对话','成见不是理解的障碍，而是理解的条件'],
+  works:['《真理与方法》(1960)']},
+ {id:'levinas', name:'列维纳斯', en:'Emmanuel Levinas', years:'1906–1995', camp:'existential', imp:3.5, year:1961,
+  q:'在认识和存在之前，我对他人负有怎样的责任？',
+  ideas:['他者伦理学：他者的面孔先于存在','“伦理学是第一哲学”','作为对他者之责任的“人质”意识'],
+  works:['《总体与无限》(1961)','《别样于存在》(1974)']},
+ {id:'sartre', name:'萨特', en:'Jean-Paul Sartre', years:'1905–1980', camp:'existential', imp:4, year:1943,
+  q:'如果没有预先给定的人性，人该如何为自己负责？',
+  ideas:['存在先于本质：人被判定为自由','自欺：假装没有选择以逃避责任','“他人即地狱”（剧作《禁闭》）；介入的文学','晚期尝试结合存在主义与马克思主义'],
+  works:['《恶心》(1938)','《存在与虚无》(1943)','《辩证理性批判》(1960)']},
+ {id:'beauvoir', name:'波伏娃', en:'Simone de Beauvoir', years:'1908–1986', camp:'existential', imp:4, year:1949,
+  q:'女人为什么总被定义为“第二性”，也就是他者？',
+  ideas:['“女人不是天生的，而是变成的”','女性被塑造为男性的他者；《第二性》奠基现代女权主义','存在主义伦理学：模糊性的道德'],
+  works:['《模糊性的道德》(1947)','《第二性》(1949)']},
+ {id:'camus', name:'加缪', en:'Albert Camus', years:'1913–1960', camp:'existential', imp:4, year:1942,
+  q:'如果世界毫无意义，人是否还值得活下去？',
+  ideas:['荒诞：人对意义的渴望与世界沉默的冲突','“应当想象西西弗是幸福的”','从荒诞走向反抗：反抗必须有限度','自认不是存在主义者，后与萨特决裂'],
+  works:['《局外人》(1942)','《西西弗神话》(1942)','《鼠疫》(1947)','《反抗者》(1951)']},
+ {id:'marx', name:'马克思', en:'Karl Marx', years:'1818–1883', camp:'marxism', imp:4.5, year:1867,
+  q:'推动历史的是什么？资本主义如何让人与自己的劳动相疏离？',
+  ideas:['把黑格尔辩证法“颠倒”为历史唯物主义','经济基础决定上层建筑，阶级斗争推动历史','异化劳动与剩余价值理论','“哲学家们只是解释世界，而问题在于改变世界”'],
+  works:['《1844年经济学哲学手稿》','《共产党宣言》(1848，与恩格斯)','《资本论》(1867)']},
+ {id:'lukacs', name:'卢卡奇', en:'György Lukács', years:'1885–1971', camp:'marxism', imp:3, year:1923,
+  q:'工人为什么没有像马克思预言的那样起来革命？',
+  ideas:['物化（Verdinglichung）：商品形式渗入人的意识','阶级意识与总体性范畴','西方马克思主义的开山之作'],
+  works:['《历史与阶级意识》(1923)']},
+ {id:'gramsci', name:'葛兰西', en:'Antonio Gramsci', years:'1891–1937', camp:'marxism', imp:3.5, year:1930,
+  q:'统治者为什么不必一直依靠暴力，也能维持统治？',
+  ideas:['文化领导权（hegemony）：统治依靠同意而非仅靠强制','阵地战与运动战','有机知识分子'],
+  works:['《狱中札记》(1929–1935)']},
+ {id:'benjamin', name:'本雅明', en:'Walter Benjamin', years:'1892–1940', camp:'marxism', imp:3.5, year:1936,
+  q:'技术与现代性如何改变了艺术和历史经验？',
+  ideas:['机械复制时代艺术灵韵的消逝','历史天使：进步是一场把废墟堆向天空的风暴','拱廊街计划：巴黎，十九世纪的首都'],
+  works:['《机械复制时代的艺术作品》(1936)','《历史哲学论纲》(1940)']},
+ {id:'adorno', name:'阿多诺', en:'Theodor W. Adorno', years:'1903–1969', camp:'marxism', imp:4, year:1947,
+  q:'启蒙理性为什么反而导向了新的野蛮？',
+  ideas:['启蒙辩证法：理性如何滑向自身的野蛮','文化工业：大众文化的标准化操控','否定辩证法：拒绝同一性思维'],
+  works:['《启蒙辩证法》(1947，与霍克海默)','《否定的辩证法》(1966)']},
+ {id:'marcuse', name:'马尔库塞', en:'Herbert Marcuse', years:'1898–1979', camp:'marxism', imp:3, year:1964,
+  q:'富裕的工业社会，是否吞没了人批判和反抗的能力？',
+  ideas:['单向度的人：批判维度被发达工业社会吸收','爱欲与文明：非压抑性文明的可能性','1968 年学生运动的精神导师'],
+  works:['《爱欲与文明》(1955)','《单向度的人》(1964)']},
+ {id:'althusser', name:'阿尔都塞', en:'Louis Althusser', years:'1918–1990', camp:'marxism', imp:3, year:1965,
+  q:'我们是如何被意识形态塑造成“主体”的？',
+  ideas:['结构马克思主义：多元决定与“无主体的过程”','意识形态把个人询唤为主体','马克思思想中的“认识论断裂”'],
+  works:['《保卫马克思》(1965)','《读〈资本论〉》(1965)']},
+ {id:'habermas', name:'哈贝马斯', en:'Jürgen Habermas', years:'1929–', camp:'marxism', imp:4, year:1981,
+  q:'在现代社会中，理性的公共讨论还有可能吗？',
+  ideas:['交往理性：以达成理解为目标的语言行动','公共领域的结构转型','系统对生活世界的殖民'],
+  works:['《公共领域的结构转型》(1962)','《交往行为理论》(1981)']},
+ {id:'freud', name:'弗洛伊德', en:'Sigmund Freud', years:'1856–1939', camp:'psycho', imp:5, year:1900,
+  q:'支配我们的，是否主要是我们自己都不知道的欲望？',
+  ideas:['无意识：心灵冰山之下的欲望','本我—自我—超我的人格结构','梦是通往无意识的王道'],
+  works:['《梦的解析》(1900)','《性学三论》(1905)','《文明及其不满》(1930)']},
+ {id:'jung', name:'荣格', en:'Carl Jung', years:'1875–1961', camp:'psycho', imp:4, year:1921,
+  q:'在个人心灵之下，是否还有全人类共享的深层结构？',
+  ideas:['集体无意识与原型','个体化：成为完整的自己','内倾/外倾的心理类型学'],
+  works:['《心理类型》(1921)','《红书》(遗著)']},
+ {id:'lacan', name:'拉康', en:'Jacques Lacan', years:'1901–1981', camp:'psycho', imp:4, year:1966,
+  q:'如果无意识像语言一样被结构，那么“我”又是谁？',
+  ideas:['“回到弗洛伊德”：无意识像语言一样结构','镜像阶段与三界：想象—象征—实在','欲望是他者的欲望'],
+  works:['《文集》(Écrits, 1966)','《研讨班》系列']},
+ {id:'zizek', name:'齐泽克', en:'Slavoj Žižek', years:'1949–', camp:'psycho', imp:3, year:1989,
+  q:'为什么我们明知意识形态是假的，它却照样运作？',
+  ideas:['拉康 + 黑格尔 + 马克思的当代焊接','意识形态批判：幻象建构现实','以流行文化讲述哲学'],
+  works:['《意识形态的崇高客体》(1989)','《视差之见》(2006)']},
+ {id:'saussure', name:'索绪尔', en:'Ferdinand de Saussure', years:'1857–1913', camp:'structure', imp:4, year:1916,
+  q:'一个词的意义，到底从哪里来？',
+  ideas:['能指/所指：符号的任意性','语言（langue）与言语（parole）之分','差异产生意义：共时语言学'],
+  works:['《普通语言学教程》(1916，弟子整理)']},
+ {id:'levistrauss', name:'列维-施特劳斯', en:'Claude Lévi-Strauss', years:'1908–2009', camp:'structure', imp:3.5, year:1949,
+  q:'不同文化的神话与亲属制度背后，是否有共同的结构？',
+  ideas:['结构人类学：神话背后的深层结构','野性思维是“具体性的科学”','二元对立：生/熟、自然/文化'],
+  works:['《亲属关系的基本结构》(1949)','《忧郁的热带》(1955)']},
+ {id:'barthes', name:'罗兰·巴特', en:'Roland Barthes', years:'1915–1980', camp:'structure', imp:3, year:1957,
+  q:'广告、时尚这些日常符号，如何悄悄传递意识形态？',
+  ideas:['神话学：日常文化中的意识形态符号','“作者之死”','从结构主义走向后结构主义'],
+  works:['《神话学》(1957)','《S/Z》(1970)']},
+ {id:'foucault', name:'福柯', en:'Michel Foucault', years:'1926–1984', camp:'structure', imp:5, year:1969,
+  q:'知识与权力如何塑造出“正常人”“疯子”和“罪犯”？',
+  ideas:['知识考古学：话语构造它的对象','权力/知识共生：规训与全景敞视','主体是被生产出来的：“人之死”'],
+  works:['《词与物》(1966)','《知识考古学》(1969)','《规训与惩罚》(1975)']},
+ {id:'derrida', name:'德里达', en:'Jacques Derrida', years:'1930–2004', camp:'structure', imp:4.5, year:1967,
+  q:'文本的意义能被最终固定下来吗？',
+  ideas:['解构：拆解二元对立中的等级','延异（différance）：意义永远被延迟','对西方逻各斯中心主义的批判'],
+  works:['《论文字学》(1967)','《声音与现象》(1967)']},
+ {id:'deleuze', name:'德勒兹', en:'Gilles Deleuze', years:'1925–1995', camp:'structure', imp:4, year:1968,
+  q:'如果不从“同一”出发，而从“差异”出发，该如何思考？',
+  ideas:['差异哲学：肯定差异与生成本身','欲望机器与精神分裂分析（与加塔利）','块茎、褶子、游牧思想'],
+  works:['《差异与重复》(1968)','《反俄狄浦斯》(1972，与加塔利)']},
+ {id:'lyotard', name:'利奥塔', en:'Jean-François Lyotard', years:'1924–1998', camp:'structure', imp:3, year:1979,
+  q:'当人们不再相信宏大叙事，知识靠什么获得正当性？',
+  ideas:['后现代状况：对宏大叙事的怀疑','歧争（différend）：不可通约的语言游戏','知识在信息时代的合法化危机'],
+  works:['《后现代状况》(1979)','《歧争》(1983)']},
+ {id:'baudrillard', name:'鲍德里亚', en:'Jean Baudrillard', years:'1929–2007', camp:'structure', imp:3, year:1970,
+  q:'当符号和影像无处不在，“真实”还剩下什么？',
+  ideas:['消费社会：符号价值取代使用价值','拟像与超真实：复制品比真实更真','“海湾战争不曾发生”'],
+  works:['《消费社会》(1970)','《拟像与仿真》(1981)']},
+ {id:'butler', name:'巴特勒', en:'Judith Butler', years:'1956–', camp:'structure', imp:3.5, year:1990,
+  q:'性别是天生的本质，还是被一遍遍“做”出来的？',
+  ideas:['性别操演：性别在反复的实践中被建构','质疑生理性别/社会性别的自然二分','后期关注脆弱性与“可哀悼的生命”'],
+  works:['《性别麻烦》(1990)','《身体之重》(1993)']},
+ {id:'peirce', name:'皮尔士', en:'C.S. Peirce', years:'1839–1914', camp:'analytic', imp:3, year:1878,
+  q:'一个观念的意义，是否就在于它能带来的实践后果？',
+  ideas:['实用主义准则：意义在于可设想的实践后果','符号学三分：像似/指示/规约','可错论的科学哲学'],
+  works:['《如何使我们的观念清楚》(1878)']},
+ {id:'james', name:'威廉·詹姆斯', en:'William James', years:'1842–1910', camp:'analytic', imp:3.5, year:1890,
+  q:'说一个信念“为真”，到底意味着什么？',
+  ideas:['实用主义真理观：真观念是能在经验中被证实、“兑现”的观念（常被简化为“有用即真理”）','意识流与彻底经验主义','信仰的意志'],
+  works:['《心理学原理》(1890)','《实用主义》(1907)']},
+ {id:'frege', name:'弗雷格', en:'Gottlob Frege', years:'1848–1925', camp:'analytic', imp:4, year:1879,
+  q:'数学真理的基础是什么？语言如何指称世界？',
+  ideas:['现代数理逻辑之父：概念文字（谓词逻辑）','含义（Sinn）与指称（Bedeutung）的区分','把算术建立在逻辑之上（逻辑主义）'],
+  works:['《概念文字》(1879)','《算术基础》(1884)']},
+ {id:'dewey', name:'杜威', en:'John Dewey', years:'1859–1952', camp:'analytic', imp:3, year:1916,
+  q:'思想、教育与民主，如何服务于解决真实的问题？',
+  ideas:['工具主义：思想是解决问题的工具','“做中学”的教育哲学','民主作为一种生活方式'],
+  works:['《民主主义与教育》(1916)','《经验与自然》(1925)']},
+ {id:'russell', name:'罗素', en:'Bertrand Russell', years:'1872–1970', camp:'analytic', imp:4, year:1903,
+  q:'能否用逻辑分析澄清语言，从而解决哲学问题？',
+  ideas:['逻辑原子主义','摹状词理论：分析哲学的典范操作','与摩尔一起反叛黑格尔式观念论，开创分析传统','类型论化解“罗素悖论”'],
+  works:['《数学原理》(1910，与怀特海)','《哲学问题》(1912)','《西方哲学史》(1945)']},
+ {id:'wittgenstein', name:'维特根斯坦', en:'Ludwig Wittgenstein', years:'1889–1951', camp:'analytic', imp:4.5, year:1921,
+  q:'语言的界限在哪里？“意义”到底是什么？',
+  ideas:['前期：语言是世界的“图像”；对不可说者应保持沉默','后期：语言游戏与家族相似——意义即使用','哲学病源于语言的误用，治疗而非解决'],
+  works:['《逻辑哲学论》(1921)','《哲学研究》(1953，遗著)']},
+ {id:'vienna', name:'维也纳学派', en:'Vienna Circle', years:'1920s–1930s', camp:'analytic', imp:3, year:1929, school:true,
+  q:'怎样区分有意义的科学命题和无意义的形而上学？',
+  ideas:['逻辑实证主义：命题的意义在于可证实性','拒斥形而上学为“无意义”','统一科学运动（石里克、卡尔纳普等）'],
+  works:['《科学的世界观：维也纳学派》(1929)','卡尔纳普《世界的逻辑构造》(1928)']},
+ {id:'popper', name:'波普尔', en:'Karl Popper', years:'1902–1994', camp:'analytic', imp:4, year:1934,
+  q:'科学与伪科学的分界在哪里？',
+  ideas:['可证伪性：科学与非科学的分界标准','开放社会及其敌人','三个世界理论'],
+  works:['《科学发现的逻辑》(1934)','《开放社会及其敌人》(1945)']},
+ {id:'quine', name:'蒯因', en:'W.V.O. Quine', years:'1908–2000', camp:'analytic', imp:3.5, year:1951,
+  q:'“分析”与“综合”、哲学与科学之间，真的有清楚的界线吗？',
+  ideas:['批判“经验论的两个教条”：消解分析/综合之分','自然化认识论','翻译不确定性与本体论承诺'],
+  works:['《从逻辑的观点看》(1953)','《语词与对象》(1960)']},
+ {id:'kuhn', name:'库恩', en:'Thomas Kuhn', years:'1922–1996', camp:'analytic', imp:4, year:1962,
+  q:'科学是在稳步积累，还是会经历断裂式的革命？',
+  ideas:['范式与常规科学','科学革命：不可通约的世界更替','以史学重释科学进步'],
+  works:['《科学革命的结构》(1962)']},
+ {id:'davidson', name:'戴维森', en:'Donald Davidson', years:'1917–2003', camp:'analytic', imp:3, year:1967,
+  q:'我们如何理解别人说的话？心灵与物理世界是什么关系？',
+  ideas:['真值条件语义学：意义理论','异常一元论：心理与物理的非严格同一','彻底解释（radical interpretation）'],
+  works:['《真理与意义的探究》(1984)']},
+ {id:'kripke', name:'克里普克', en:'Saul Kripke', years:'1940–2022', camp:'analytic', imp:3.5, year:1972,
+  q:'名字如何指向事物？“必然”与“先天”是一回事吗？',
+  ideas:['可能世界语义学','严格指示词：专名与自然类','先天偶然与后天必然'],
+  works:['《命名与必然性》(1972)','《维特根斯坦论规则与私人语言》(1982)']},
+ {id:'putnam', name:'普特南', en:'Hilary Putnam', years:'1926–2016', camp:'analytic', imp:3, year:1975,
+  q:'意义在头脑之中吗？心灵能否像软件一样在不同硬件上实现？',
+  ideas:['功能主义：心灵如软件（后期本人转而批评）','孪生地球：“意义不在头脑之中”','缸中之脑思想实验'],
+  works:['《心灵、语言与实在》(1975)','《理性、真理与历史》(1981)']},
+ {id:'searle', name:'塞尔', en:'John Searle', years:'1932–', camp:'analytic', imp:3, year:1980,
+  q:'一台按规则处理符号的机器，真的“理解”语言吗？',
+  ideas:['言语行为理论','中文房间：反驳强人工智能','意向性与社会实在的建构'],
+  works:['《言语行为》(1969)','《心灵、大脑与程序》(1980)','《意向性》(1983)']},
+ {id:'dennett', name:'丹尼特', en:'Daniel Dennett', years:'1942–2024', camp:'analytic', imp:3, year:1991,
+  q:'意识能否被彻底地用自然科学来解释？',
+  ideas:['意识的“多重草稿”模型','意向立场：解释行为的策略','演化论视野下的心灵'],
+  works:['《意识的解释》(1991)','《达尔文的危险观念》(1995)']},
+ {id:'chalmers', name:'查尔莫斯', en:'David Chalmers', years:'1966–', camp:'analytic', imp:3, year:1996,
+  q:'大脑的物理过程，为什么会伴随着主观体验？',
+  ideas:['意识的困难问题：为何存在主观体验本身','哲学僵尸思想实验','属性二元论与泛心论倾向'],
+  works:['《有意识的心灵》(1996)']},
+ {id:'rorty', name:'罗蒂', en:'Richard Rorty', years:'1931–2007', camp:'analytic', imp:3.5, year:1979,
+  q:'哲学能否不再充当“自然之镜”，转而服务于人的团结？',
+  ideas:['新实用主义：真理是“好用的信念”','反表象主义：哲学不是自然之镜','团结先于客观性'],
+  works:['《哲学与自然之镜》(1979)','《偶然、反讽与团结》(1989)']},
+ {id:'mill', name:'密尔', en:'John Stuart Mill', years:'1806–1873', camp:'political', imp:3.5, year:1859,
+  q:'社会在什么限度内可以干涉个人的自由？',
+  ideas:['功利主义：最大幸福原则','论自由：伤害原则与思想言论自由','代议制政府与女性权利'],
+  works:['《论自由》(1859)','《功利主义》(1861)','《妇女的屈从地位》(1869)']},
+ {id:'arendt', name:'阿伦特', en:'Hannah Arendt', years:'1906–1975', camp:'political', imp:4.5, year:1951,
+  q:'极权主义如何成为可能？普通人为何会参与罪恶？',
+  ideas:['极权主义的起源','平庸之恶：艾希曼在耶路撒冷','公共领域与积极生活（vita activa）'],
+  works:['《极权主义的起源》(1951)','《人的境况》(1958)','《艾希曼在耶路撒冷》(1963)']},
+ {id:'rawls', name:'罗尔斯', en:'John Rawls', years:'1921–2002', camp:'political', imp:4.5, year:1971,
+  q:'如果不知道自己将成为谁，我们会选择一个怎样的社会？',
+  ideas:['正义即公平','无知之幕与原初状态','差异原则：最不利者受益'],
+  works:['《正义论》(1971)','《政治自由主义》(1993)']},
+ {id:'nozick', name:'诺齐克', en:'Robert Nozick', years:'1938–2002', camp:'political', imp:3, year:1974,
+  q:'国家的正当权力，最多可以延伸到哪里？',
+  ideas:['最小国家：“守夜人”国家','持有正义三原则','经验机器思想实验'],
+  works:['《无政府、国家与乌托邦》(1974)']},
+];
+
+/* ==================== 关系数据 ==================== */
+/* 约定：s → t，t 承接或回应 s。批判类：t 批判 s */
+const LINKS = [
+ {s:'descartes', t:'spinoza',     type:'inherit',   note:'实体学说的推进：从二元到一元'},
+ {s:'descartes', t:'leibniz',     type:'influence', note:'唯理论谱系'},
+ {s:'descartes', t:'locke',       type:'critique',  note:'洛克批判天赋观念论'},
+ {s:'locke',     t:'berkeley',    type:'inherit',   note:'经验论推向观念论'},
+ {s:'locke',     t:'hume',        type:'inherit',   note:'经验论的彻底化'},
+ {s:'hobbes',    t:'locke',       type:'influence', note:'社会契约与自然权利的谱系'},
+ {s:'hobbes',    t:'rousseau',    type:'critique',  note:'人性预设之争：战争状态，还是淳朴的自然人'},
+ {s:'rousseau',  t:'wollstonecraft',type:'critique',note:'批判《爱弥儿》中把女性教育附属于男性的观点'},
+ {s:'locke',     t:'wollstonecraft',type:'influence',note:'以启蒙的自然权利论为女性争取教育与理性'},
+ {s:'hume',      t:'kant',        type:'influence', note:'康德自述休谟把他从“独断论的迷梦”中唤醒'},
+ {s:'leibniz',   t:'kant',        type:'critique',  note:'康德批判莱布尼茨—沃尔夫体系的独断论'},
+ {s:'descartes', t:'kant',        type:'transform', note:'主体性原则的综合与改造'},
+ {s:'rousseau',  t:'kant',        type:'influence', note:'卢梭的自由观与道德情感深深打动康德'},
+ {s:'kant',      t:'fichte',      type:'transform', note:'取消物自体，以“自我设定非我”重建体系'},
+ {s:'fichte',    t:'schelling',   type:'transform', note:'从主观唯心论走向自然哲学与同一哲学'},
+ {s:'schelling', t:'hegel',       type:'critique',  note:'图宾根时期的同窗；《精神现象学》序言批评谢林无差别的“绝对”'},
+ {s:'kant',      t:'hegel',       type:'transform', note:'批判哲学的界限被扬弃为绝对精神的辩证体系'},
+ {s:'spinoza',   t:'hegel',       type:'influence', note:'黑格尔视斯宾诺莎的实体观为哲学的必经起点'},
+ {s:'hegel',     t:'feuerbach',   type:'critique',  note:'青年黑格尔派：把思辨神学还原为人本学'},
+ {s:'kant',      t:'schopenhauer',type:'inherit',   note:'接过现象/物自体之分，却把物自体读作“意志”'},
+ {s:'hegel',     t:'kierkegaard', type:'critique',  note:'以个体生存反抗体系哲学'},
+ {s:'schelling', t:'kierkegaard', type:'critique',  note:'1841 年在柏林听谢林讲课，由期待转为失望'},
+ {s:'schopenhauer',t:'nietzsche', type:'transform', note:'生命意志→权力意志：悲观否定转为价值重估'},
+ {s:'schopenhauer',t:'bergson',   type:'resonance', note:'生命冲动与盲目意志的遥远共鸣'},
+ {s:'nietzsche', t:'camus',       type:'influence', note:'“上帝之死”后的荒诞与反抗'},
+ {s:'nietzsche', t:'heidegger',   type:'transform', note:'《尼采》讲座：把尼采读作西方形而上学的完成者'},
+ {s:'kierkegaard',t:'heidegger',  type:'influence', note:'“畏”与个体生存分析的源头'},
+ {s:'kierkegaard',t:'sartre',     type:'influence', note:'存在主义谱系'},
+ {s:'kierkegaard',t:'camus',      type:'critique',  note:'《西西弗神话》把“信仰之跃”视为对荒诞的逃避'},
+ {s:'descartes', t:'husserl',     type:'influence', note:'《笛卡尔式的沉思》：现象学的先验自我回到笛卡尔'},
+ {s:'frege',     t:'husserl',     type:'influence', note:'弗雷格对心理主义的批评，与胡塞尔转向反心理主义相关'},
+ {s:'husserl',   t:'heidegger',   type:'transform', note:'现象学方法→基础存在论'},
+ {s:'husserl',   t:'merleau',     type:'transform', note:'知觉与身体现象学'},
+ {s:'husserl',   t:'levinas',     type:'inherit',   note:'出身胡塞尔门下，把现象学译介到法国'},
+ {s:'heidegger', t:'sartre',      type:'influence', note:'此在分析的法国回响'},
+ {s:'heidegger', t:'gadamer',     type:'inherit',   note:'哲学解释学'},
+ {s:'heidegger', t:'levinas',     type:'critique',  note:'他者伦理学对存在论的超越'},
+ {s:'sartre',    t:'beauvoir',    type:'influence', note:'存在主义同道与终身对话者'},
+ {s:'sartre',    t:'merleau',     type:'resonance', note:'共创《现代》杂志，后因政治立场分道'},
+ {s:'sartre',    t:'camus',       type:'resonance', note:'战时同道，彼此共鸣'},
+ {s:'camus',     t:'sartre',      type:'critique',  note:'《反抗者》(1951) 遭萨特阵营抨击，二人决裂'},
+ {s:'hegel',     t:'marx',        type:'transform', note:'“把头足倒置的辩证法颠倒过来”：唯心→唯物'},
+ {s:'feuerbach', t:'marx',        type:'transform', note:'人本唯物主义→历史唯物主义（《关于费尔巴哈的提纲》）'},
+ {s:'hegel',     t:'lukacs',      type:'inherit',   note:'总体性辩证法'},
+ {s:'marx',      t:'lukacs',      type:'inherit',   note:'西马开山：物化与阶级意识'},
+ {s:'marx',      t:'gramsci',     type:'inherit',   note:'文化领导权理论'},
+ {s:'lukacs',    t:'adorno',      type:'influence', note:'物化批判的延续'},
+ {s:'marx',      t:'adorno',      type:'inherit',   note:'以商品拜物教批判分析文化工业'},
+ {s:'freud',     t:'adorno',      type:'influence', note:'法兰克福学派把精神分析引入社会批判'},
+ {s:'benjamin',  t:'adorno',      type:'influence', note:'友谊与论争；本雅明的思想深刻塑造了阿多诺'},
+ {s:'adorno',    t:'habermas',    type:'inherit',   note:'法兰克福学派第二代'},
+ {s:'marx',      t:'marcuse',     type:'inherit',   note:'弗洛伊德马克思主义的政治批判'},
+ {s:'heidegger', t:'marcuse',     type:'influence', note:'曾是海德格尔的学生，早年尝试结合海德格尔与马克思'},
+ {s:'marx',      t:'althusser',   type:'transform', note:'结构马克思主义'},
+ {s:'marx',      t:'sartre',      type:'transform', note:'《辩证理性批判》：以存在主义重新激活马克思主义'},
+ {s:'kant',      t:'habermas',    type:'resonance', note:'启蒙与公共理性'},
+ {s:'arendt',    t:'habermas',    type:'resonance', note:'公共领域问题的接力'},
+ {s:'schopenhauer',t:'freud',     type:'resonance', note:'无意识的哲学先声'},
+ {s:'nietzsche', t:'freud',       type:'influence', note:'弗洛伊德承认尼采预见了精神分析的许多洞见'},
+ {s:'freud',     t:'jung',        type:'transform', note:'门徒的分裂：个体无意识→集体无意识'},
+ {s:'freud',     t:'lacan',       type:'transform', note:'“回到弗洛伊德”的语言学改写'},
+ {s:'hegel',     t:'lacan',       type:'influence', note:'经由科耶夫的《精神现象学》讲座（1933–39）：欲望与承认'},
+ {s:'freud',     t:'marcuse',     type:'transform', note:'《爱欲与文明》：非压抑性文明'},
+ {s:'lacan',     t:'zizek',       type:'inherit',   note:'拉康主义的当代激进化'},
+ {s:'hegel',     t:'zizek',       type:'inherit',   note:'以拉康读黑格尔，“回到黑格尔”'},
+ {s:'lacan',     t:'althusser',   type:'influence', note:'询唤理论的精神分析资源'},
+ {s:'saussure',  t:'levistrauss', type:'transform', note:'结构语言学→结构人类学'},
+ {s:'saussure',  t:'lacan',       type:'influence', note:'能指理论'},
+ {s:'saussure',  t:'barthes',     type:'inherit',   note:'把符号学扩展到大众文化'},
+ {s:'levistrauss',t:'barthes',    type:'inherit',   note:'结构方法的扩散'},
+ {s:'saussure',  t:'derrida',     type:'critique',  note:'解构逻各斯中心主义'},
+ {s:'husserl',   t:'derrida',     type:'critique',  note:'《声音与现象》：解构胡塞尔的“在场”形而上学'},
+ {s:'heidegger', t:'derrida',     type:'influence', note:'“解构”源于对存在论传统的拆解'},
+ {s:'heidegger', t:'foucault',    type:'influence', note:'福柯晚年自述，阅读海德格尔对他至关重要'},
+ {s:'nietzsche', t:'foucault',    type:'inherit',   note:'谱系学方法'},
+ {s:'althusser', t:'foucault',    type:'influence', note:'高师的师生关系'},
+ {s:'foucault',  t:'derrida',     type:'critique',  note:'德里达批评《疯癫史》对笛卡尔的解读，引发著名论战'},
+ {s:'nietzsche', t:'deleuze',     type:'inherit',   note:'差异哲学中的尼采'},
+ {s:'spinoza',   t:'deleuze',     type:'inherit',   note:'德勒兹心中的“哲学王子”'},
+ {s:'bergson',   t:'deleuze',     type:'inherit',   note:'绵延与差异'},
+ {s:'leibniz',   t:'deleuze',     type:'resonance', note:'《褶子》：巴洛克的单子'},
+ {s:'freud',     t:'deleuze',     type:'critique',  note:'《反俄狄浦斯》：欲望是生产，而非缺乏'},
+ {s:'wittgenstein',t:'lyotard',   type:'resonance', note:'语言游戏→后现代知识状况'},
+ {s:'habermas',  t:'lyotard',     type:'critique',  note:'反对以“共识”作为知识合法化的标准'},
+ {s:'marx',      t:'baudrillard', type:'critique',  note:'消费社会：符号逻辑超越生产主义'},
+ {s:'barthes',   t:'baudrillard', type:'influence', note:'日常符号的意识形态分析'},
+ {s:'beauvoir',  t:'butler',      type:'transform', note:'“变成女人”→性别操演'},
+ {s:'foucault',  t:'butler',      type:'inherit',   note:'话语与权力对主体的生产'},
+ {s:'derrida',   t:'butler',      type:'influence', note:'可重复性（iterability）与操演'},
+ {s:'frege',     t:'russell',     type:'influence', note:'逻辑主义同道；“罗素悖论”击中弗雷格的体系'},
+ {s:'russell',   t:'wittgenstein',type:'inherit',   note:'剑桥师承'},
+ {s:'frege',     t:'wittgenstein',type:'influence', note:'弗雷格建议他去剑桥跟罗素学习'},
+ {s:'james',     t:'wittgenstein',type:'influence', note:'维特根斯坦反复研读詹姆斯的心理学与宗教经验研究'},
+ {s:'wittgenstein',t:'vienna',    type:'influence', note:'《逻辑哲学论》被奉为经典（也被误读）'},
+ {s:'hume',      t:'vienna',      type:'influence', note:'反形而上学的经验论传统'},
+ {s:'hegel',     t:'russell',     type:'critique',  note:'反叛英国观念论：分析哲学由此登场'},
+ {s:'hume',      t:'popper',      type:'influence', note:'归纳问题的现代形式'},
+ {s:'vienna',    t:'popper',      type:'critique',  note:'圈外人：以证伪取代证实'},
+ {s:'popper',    t:'kuhn',        type:'critique',  note:'证伪主义 vs 范式论'},
+ {s:'vienna',    t:'quine',       type:'critique',  note:'“经验论的两个教条”釜底抽薪'},
+ {s:'quine',     t:'davidson',    type:'inherit',   note:'师生；从“彻底翻译”到“彻底解释”'},
+ {s:'wittgenstein',t:'kripke',    type:'transform', note:'“克里普克的维特根斯坦”'},
+ {s:'russell',   t:'kripke',      type:'critique',  note:'反对以摹状词解释专名'},
+ {s:'quine',     t:'putnam',      type:'influence', note:'自然化认识论的推进'},
+ {s:'putnam',    t:'searle',      type:'critique',  note:'中文房间反驳功能主义与强人工智能'},
+ {s:'wittgenstein',t:'searle',    type:'influence', note:'经由奥斯汀的日常语言哲学传统：言语行为'},
+ {s:'quine',     t:'dennett',     type:'inherit',   note:'自然主义心灵哲学'},
+ {s:'chalmers',  t:'dennett',     type:'critique',  note:'丹尼特否认“困难问题”是真问题'},
+ {s:'kripke',    t:'chalmers',    type:'resonance', note:'可能世界与意识问题'},
+ {s:'descartes', t:'chalmers',    type:'resonance', note:'心身问题的当代回响'},
+ {s:'peirce',    t:'james',       type:'inherit',   note:'实用主义的命名与展开'},
+ {s:'james',     t:'dewey',       type:'inherit',   note:'实用主义传统'},
+ {s:'dewey',     t:'rorty',       type:'transform', note:'新实用主义'},
+ {s:'quine',     t:'rorty',       type:'influence', note:'分析哲学内部的反叛'},
+ {s:'davidson',  t:'rorty',       type:'influence', note:'罗蒂借戴维森的语言观反表象主义'},
+ {s:'wittgenstein',t:'rorty',     type:'influence', note:'后期维特根斯坦：哲学作为治疗'},
+ {s:'locke',     t:'mill',        type:'inherit',   note:'古典自由主义传统'},
+ {s:'mill',      t:'james',       type:'influence', note:'《实用主义》一书题献给密尔'},
+ {s:'wollstonecraft',t:'mill',    type:'resonance', note:'女性权利的自由主义谱系'},
+ {s:'wollstonecraft',t:'beauvoir',type:'resonance', note:'女性处境的社会建构'},
+ {s:'mill',      t:'rawls',       type:'critique',  note:'功利主义忽视“人与人的分立”，罗尔斯以公平正义取而代之'},
+ {s:'kant',      t:'rawls',       type:'inherit',   note:'康德式建构主义：原初状态是道德自律的程序化表达'},
+ {s:'rousseau',  t:'rawls',       type:'influence', note:'社会契约传统的复兴'},
+ {s:'rawls',     t:'nozick',      type:'critique',  note:'分配正义之争：哈佛同事间的著名论战'},
+ {s:'heidegger', t:'arendt',      type:'influence', note:'师生之间：从存在论走向政治行动'},
+];
+
+/* ==================== 专题导览 ==================== */
+const TOURS = [
+ {title:'知识从哪里来？', sub:'唯理论与经验论之争，以及康德的综合', steps:[
+  {id:'descartes', text:'故事从怀疑开始。笛卡尔怀疑一切，最后发现“我正在思考”这件事无法怀疑，于是把知识的地基放在理性之上。这条路线叫唯理论。'},
+  {id:'locke', text:'洛克反对天赋观念：心灵生来是一块白板，一切知识都来自经验。经验论由此成型。'},
+  {id:'berkeley', text:'贝克莱把经验论推得更远：我们感知到的只是观念，那个在感知之外的“物质”根本无从谈起。'},
+  {id:'leibniz', text:'另一边，莱布尼茨用单子论为唯理论搭起一座精巧的形而上学大厦。'},
+  {id:'hume', text:'休谟把经验论推到极限：因果不过是习惯，归纳没有理性保证。科学似乎失去了根基。'},
+  {id:'kant', text:'康德说休谟把他从独断论中唤醒。他的回答是：知识既需要经验提供材料，也需要心灵先天的形式来组织材料。看地图：左上的经验论和右上的唯理论，正是在这里汇合。'},
+ ]},
+ {title:'从黑格尔到批判理论', sub:'沿地图中轴往下：辩证法如何从“精神”走到“社会”', steps:[
+  {id:'hegel', text:'黑格尔把哲学变成了历史：精神在矛盾与否定中不断前进，最终在自由中认识自己。'},
+  {id:'feuerbach', text:'青年黑格尔派的费尔巴哈把目光从“精神”拉回到“人”：神不过是人把自己的本质投射出去的结果。'},
+  {id:'marx', text:'马克思再进一步：推动历史的不是观念，而是物质生产和阶级斗争。哲学的任务是改变世界。'},
+  {id:'lukacs', text:'预言中的革命在西欧迟迟没有到来。卢卡奇认为问题出在意识上：商品逻辑把人与人的关系物化了。西方马克思主义从此转向文化与意识。'},
+  {id:'gramsci', text:'葛兰西补充说，现代统治主要靠“同意”，也就是文化领导权，而不只是靠暴力。'},
+  {id:'adorno', text:'法兰克福学派的阿多诺追问：启蒙为什么会走向野蛮？文化工业又是怎样驯化大众的？'},
+  {id:'habermas', text:'第二代的哈贝马斯不愿全盘悲观。他在交往理性和公共领域中重新寻找启蒙的希望。'},
+ ]},
+ {title:'回到事情本身', sub:'现象学运动：从意识到存在、身体与他者', steps:[
+  {id:'husserl', text:'胡塞尔要求悬搁一切预设，精确描述事物如何在意识中显现。关键概念是意向性：意识总是关于某物的意识。'},
+  {id:'heidegger', text:'学生海德格尔改写了问题：比意识更原初的，是“在世界之中存在”的此在。现象学由此变成了存在论。'},
+  {id:'sartre', text:'萨特把现象学带到法国，发展成存在主义：存在先于本质，人在选择中定义自己。'},
+  {id:'merleau', text:'梅洛-庞蒂提醒我们：人不是悬浮的意识，而是有身体的存在，知觉才是一切的起点。'},
+  {id:'levinas', text:'列维纳斯认为，他者的面孔向我提出的伦理要求，先于一切认识与存在论。'},
+  {id:'gadamer', text:'伽达默尔把海德格尔的思路引向理解与解释：理解总是发生在历史与传统之中，这就是视域融合。'},
+  {id:'derrida', text:'德里达从细读胡塞尔起步，指出“在场”从来不纯粹。现象学在这里走向了解构。'},
+ ]},
+ {title:'语言转向：两条道路', sub:'地图左侧的分析哲学与右侧的结构主义，如何各自“转向语言”', steps:[
+  {id:'frege', text:'弗雷格创立现代逻辑，区分了含义与指称。哲学开始把注意力放到语言本身上。'},
+  {id:'russell', text:'罗素用逻辑分析语句（摹状词理论是典范），认为许多哲学难题来自语言的误导。分析哲学由此诞生。'},
+  {id:'wittgenstein', text:'维特根斯坦前期认为语言像图像一样描绘世界；后期却转而主张：意义就在于使用，在各种语言游戏之中。'},
+  {id:'vienna', text:'维也纳学派据此提出逻辑实证主义：无法被经验证实的形而上学命题都是无意义的。'},
+  {id:'quine', text:'蒯因反过来动摇了逻辑实证主义的两个教条，分析哲学开始自我修正。'},
+  {id:'saussure', text:'现在把目光移到地图右侧。几乎同一时期，欧陆从另一个方向进入语言：索绪尔区分能指与所指，指出意义来自符号之间的差异。'},
+  {id:'levistrauss', text:'列维-施特劳斯把这一洞见用到神话和亲属制度上，结构主义随之席卷人文学科。'},
+  {id:'derrida', text:'德里达则指出，差异的游戏没有终点，意义永远在延迟（延异）。两条语言转向在此形成鲜明对照。'},
+ ]},
+ {title:'意志、无意识与欲望', sub:'理性之下的暗流', steps:[
+  {id:'schopenhauer', text:'叔本华说，世界的本质不是理性，而是盲目的生命意志。'},
+  {id:'nietzsche', text:'尼采把悲观的意志转为肯定的权力意志，并用谱系学揭开道德背后的欲望。'},
+  {id:'freud', text:'弗洛伊德从临床出发，论证我们在很大程度上被自己并不知道的无意识欲望所支配。'},
+  {id:'jung', text:'荣格与老师分道扬镳：在个人无意识之下，还有全人类共享的集体无意识。'},
+  {id:'lacan', text:'拉康借助语言学重读弗洛伊德：无意识像语言一样结构，欲望是他者的欲望。'},
+  {id:'deleuze', text:'德勒兹与加塔利反对把欲望理解为“缺乏”：欲望是生产性的机器。'},
+  {id:'zizek', text:'齐泽克把拉康和黑格尔用于意识形态批判，让精神分析进入当代政治与流行文化。'},
+ ]},
+ {title:'正义与自由', sub:'从社会契约到当代正义论', steps:[
+  {id:'hobbes', text:'霍布斯设想没有国家的自然状态：人人自危。于是人们订立社会契约，把权力交给主权者。'},
+  {id:'locke', text:'洛克同样讲契约，但强调生命、自由、财产是不可让渡的自然权利；政府若侵犯它们，人民可以反抗。'},
+  {id:'rousseau', text:'卢梭认为腐蚀人的是文明与私有制；正当的政治应当体现人民的公意。'},
+  {id:'wollstonecraft', text:'沃斯通克拉夫特追问：启蒙所说的“人”的权利，为什么把女性排除在外？'},
+  {id:'mill', text:'密尔提出伤害原则：只要不伤害他人，个人自由就不应被干涉。'},
+  {id:'arendt', text:'阿伦特亲历极权主义，思考政治行动与公共领域为何对人不可或缺。'},
+  {id:'rawls', text:'罗尔斯用无知之幕重启社会契约：在不知道自己将成为谁的时候，我们会选择公平。'},
+  {id:'nozick', text:'诺齐克反驳说，再分配侵犯了个人权利，唯一正当的是最小国家。'},
+ ]},
+];
+
+/* ==================== 争论对照 ==================== */
+const DEBATES = [
+ {id:'innate', a:'descartes', b:'locke', title:'笛卡尔 × 洛克', q:'心灵里有与生俱来的观念吗？',
+  A:{claim:'有。一些最重要的观念不可能来自感官，只能是心灵本有的。',
+     args:['感官常常欺骗我们，确定的知识不能以它为基础','“无限而完满的神”这样的观念，超出了一切有限经验所能提供的内容','数学真理的必然性，无法从有限的经验中归纳出来']},
+  B:{claim:'没有。心灵生来是一张白纸，一切观念都来自感觉与反省。',
+     args:['如果有天赋观念，儿童和未受教育的人也应该知道它们，但事实并非如此','所谓“人人同意的原则”并不存在；即使存在，也可以用经验来解释','一切复杂观念都能拆解为来自经验的简单观念']},
+  crux:'知识的“必然性”从哪里来：来自理性自身，还是只是经验的概括？',
+  after:'康德后来给出综合方案：知识的材料来自经验，但组织材料的形式是先天的。',
+  think:'你学会“1+1=2”，是靠数苹果，还是靠理解？如果是靠理解，这种理解又是从哪里来的？'},
+ {id:'nature', a:'hobbes', b:'rousseau', title:'霍布斯 × 卢梭', q:'没有国家的时候，人是什么样的？',
+  A:{claim:'自然状态是一切人对一切人的战争，人的生活孤独、贫困、卑污、残忍而短寿。',
+     args:['人在体力和智力上大致平等，所以谁都可能威胁谁','资源有限，竞争、猜忌和对荣誉的追求使冲突不可避免','没有共同权力约束，最理性的做法就是先下手为强','结论：需要一个强大的主权者（利维坦）来维持秩序']},
+  B:{claim:'自然人是自足、平和、富有同情心的，败坏人的是社会和私有制。',
+     args:['霍布斯把社会中才形成的骄傲与贪婪，错误地投射到了自然人身上','自然人需求简单，彼此很少依赖，也就很少冲突','不平等始于第一个圈起一块地、宣称“这是我的”的人','结论：需要一种体现公意的新契约，使人在服从法律时仍然只服从自己']},
+  crux:'人的恶是天性，还是社会造成的？这决定了政治是用来“约束”人，还是“解放”人。',
+  after:'洛克走了中间路线：自然状态有自然法约束，但不够稳定；罗尔斯把“自然状态”改造成了“原初状态”。',
+  think:'网络上的戾气，更像霍布斯说的自然状态，还是卢梭说的被社会比较败坏的结果？'},
+ {id:'system', a:'hegel', b:'kierkegaard', title:'黑格尔 × 克尔凯郭尔', q:'一个宏大的哲学体系，能把握个人的生存吗？',
+  A:{claim:'真理是整体。个人的意义要放在精神的历史发展中才能理解。',
+     args:['孤立的片面都是不完整的，只有在整体中才获得真实意义','历史有其内在理性，矛盾最终会在更高的综合中被扬弃','个体在家庭、市民社会和国家的伦理生活中实现自由']},
+  B:{claim:'真理是主体性。体系可以解释一切，唯独解释不了“我此刻该怎样活”。',
+     args:['生存中的抉择是“非此即彼”，不能被“既此又彼”地调和','信仰是个人的跳跃，无法由理性一步步推出','构造体系的思想者，忘记了自己也是一个会焦虑、会死的具体的人']},
+  crux:'哲学应当从“整体”出发理解个人，还是从个人的具体处境出发？',
+  after:'克尔凯郭尔被视为存在主义的先驱；海德格尔、萨特都沿着“从个人生存出发”的方向前进。',
+  think:'选择专业、选择伴侣时，“理性分析”能替你做出决定吗？剩下的那一部分是什么？'},
+ {id:'revolt', a:'sartre', b:'camus', title:'萨特 × 加缪', q:'为了历史的正义，可以容忍不正义的手段吗？',
+  A:{claim:'人必须介入历史。为了消灭压迫，有缺陷的革命运动也应当支持。',
+     args:['不存在中立：不选择也是一种选择','改变世界需要具体的政治行动，而行动难免“弄脏双手”','站在历史之外做纯粹的道德批评，等于回避责任']},
+  B:{claim:'反抗必须有限度。以未来的名义把今天的杀戮合理化，反抗就变成了新的压迫。',
+     args:['反抗的起点是对人的尊严的肯定，因此它本身就包含界限','把历史绝对化，会把活生生的人变成实现目标的手段','“我反抗，故我们存在”：反抗是团结，而不是新的统治']},
+  crux:'目的能否为手段辩护？历史进步与个人尊严冲突时，谁优先？',
+  after:'1952 年《现代》杂志上的论战使二人彻底决裂。今天看来，这场争论关乎一切以“大局”为名的政治。',
+  think:'一场你认同的运动中出现了不正义的手段，你会继续支持、公开批评，还是退出？'},
+ {id:'science', a:'popper', b:'kuhn', title:'波普尔 × 库恩', q:'科学是怎样进步的？',
+  A:{claim:'科学通过大胆猜想和严格反驳而进步。理论永远不能被证实，只能经受住证伪的检验。',
+     args:['再多的白天鹅也证明不了“天鹅都是白的”，一只黑天鹅就能推翻它','真正的科学理论会冒被驳倒的风险，能解释一切的理论反而可疑','科学家应当始终以批判的态度对待自己的理论']},
+  B:{claim:'科学史并不是这样运作的。大多数时候科学家在一个范式内解题，只有危机时才发生革命。',
+     args:['历史上的科学家常常保留与反例冲突的理论，而不是立刻放弃','新旧范式对问题、标准甚至概念的理解不同，难以直接比较（不可通约）','科学革命更像格式塔转换，而不是一点点积累']},
+  crux:'科学的理性，是一种应当遵循的方法（规范），还是要从科学的实际历史中去描述？',
+  after:'拉卡托斯、费耶阿本德等人在两人之间继续争论，形成了 20 世纪后半叶科学哲学的主线。',
+  think:'你所学专业里的“常识”，将来有没有可能被整个推翻？那时会发生什么？'},
+ {id:'justice', a:'rawls', b:'nozick', title:'罗尔斯 × 诺齐克', q:'国家可以为了公平而重新分配财富吗？',
+  A:{claim:'可以，而且应当。在无知之幕后，理性的人会选择保障平等自由，并让不平等有利于最不利者。',
+     args:['天赋和出身在道德上是偶然的，不应决定一个人一生的命运','社会是一个合作体系，合作的收益应当公平分配','正义首先是对社会基本制度的要求，而不只是对个人行为的要求']},
+  B:{claim:'不可以。只要财产的获得和转让是正当的，结果就是正义的；强制再分配把一部分人当成了另一部分人的工具。',
+     args:['篮球明星的例子：人们自愿付钱看他比赛，由此产生的贫富差距有什么不正义？','为再分配而征税，相当于强迫一部分人为他人劳动','唯一正当的国家是只负责保护权利的最小国家']},
+  crux:'正义看“结果的分布模式”，还是看“形成结果的历史过程”？',
+  after:'这场争论奠定了当代自由主义（平等主义）与自由至上主义的基本分野；社群主义者又从第三个方向批评了两人。',
+  think:'如果你生来就有过人的天赋，你的收入中有多少应当“属于”你自己？'},
+ {id:'consensus', a:'habermas', b:'lyotard', title:'哈贝马斯 × 利奥塔', q:'理性的共识是解放，还是压制？',
+  A:{claim:'现代性是一项未完成的规划。在不受强制的讨论中、以更好的论证为准达成的共识，是正当性的基础。',
+     args:['语言交往本身就预设了真诚、正确和可理解的要求','放弃理性标准，只会给赤裸的权力留下空间','后现代批判者自己也在用理性论证，这说明理性无法被抛弃']},
+  B:{claim:'宏大叙事已经失去了可信度。追求普遍共识会压制那些不可通约的语言游戏。',
+     args:['知识的合法性，不再能从“解放”或“精神的实现”这样的元叙事中获得','所谓共识，常常只是某种话语的胜利','正义应当尊重异质与差异（歧争），而不是强求统一']},
+  crux:'不同的人、不同的文化之间，是否存在一个共同的理性标准？',
+  after:'这场争论被视为“现代性对后现代”的标志性交锋，影响了此后关于多元社会与公共讨论的研究。',
+  think:'一场争论到最后“大家都同意了”，这一定是理性的胜利吗？有没有可能只是有人不再说话？'},
+ {id:'consciousness', a:'chalmers', b:'dennett', title:'查尔莫斯 × 丹尼特', q:'意识的“困难问题”真的存在吗？',
+  A:{claim:'存在。即使完全解释了大脑的功能和行为，仍然没有解释为什么这一切伴随着主观体验。',
+     args:['可以设想一个行为与我们完全相同、却没有任何体验的“哲学僵尸”','既然可以设想，体验就不能从物理事实中逻辑地推出','因此需要把意识当作世界的一种基本属性来研究']},
+  B:{claim:'不存在。一旦解释了辨别、报告、注意等所有功能，就没有剩下的东西需要解释。',
+     args:['“哲学僵尸”只是看起来可以设想，仔细推敲就自相矛盾','内省并不可靠，我们对“感质”的直觉常常是误解','意识是大脑中多个并行过程的“多重草稿”，不存在一个观看一切的内在剧场']},
+  crux:'主观体验是功能之外的“额外事实”，还是功能本身？',
+  after:'随着人工智能的发展，这场争论从书斋走进了现实：我们该如何判断一个系统是否有体验？',
+  think:'如果一个 AI 在所有对话中都表现得像有感受，你会认为它真的有感受吗？你凭什么判断？'},
+];
+
+/* ==================== 术语表 ==================== */
+const TERM_CATS = {epi:'认识论', meta:'形而上学', exist:'生存·现象学', social:'社会批判', psy:'精神分析', lang:'语言·结构', sci:'分析·科学·心灵', pol:'伦理·政治'};
+/* t 术语 · o 原文 · c 类别 · a 正文中的写法 · b 一句白话 · d 展开 · p 相关人物 · r 相关术语 */
+const TERMS = [
+ {id:'rationalism', t:'唯理论', o:'Rationalism', c:'epi', a:['唯理论','理性主义'], b:'认为最可靠的知识来自理性推演，而不是感官经验。',
+  d:'17 世纪欧陆的主流：笛卡尔、斯宾诺莎、莱布尼茨都以数学式的演绎为知识的典范，与英国经验论相对。地图右上角就是这一支。', p:['descartes','spinoza','leibniz'], r:['empiricism','innate']},
+ {id:'empiricism', t:'经验论', o:'Empiricism', c:'epi', a:['经验论','经验主义'], b:'认为一切知识最终都来自感官经验。',
+  d:'以洛克、贝克莱、休谟为代表的英国传统，一路推向对因果和实体的怀疑，20 世纪又在逻辑实证主义中复兴。地图左上角就是这一支。', p:['locke','berkeley','hume','vienna','james'], r:['rationalism','induction']},
+ {id:'innate', t:'天赋观念', o:'innate ideas', c:'epi', a:['天赋观念'], b:'心灵生来就有、不依赖经验的观念。',
+  d:'笛卡尔认为神、无限、数学公理等观念不可能从感官得来，只能是心灵本有的。洛克以“儿童并不知道这些观念”为由加以否定。', p:['descartes','locke','leibniz'], r:['tabula','rationalism']},
+ {id:'tabula', t:'白板', o:'tabula rasa', c:'epi', a:['白板说','白板'], b:'心灵生来是一张白纸，内容全由经验写上。',
+  d:'洛克的比喻。观念只有两个来源：对外物的感觉，以及对心灵自身活动的反省。这是经验论的基本立场。', p:['locke'], r:['innate','empiricism']},
+ {id:'cogito', t:'我思', o:'cogito ergo sum', c:'epi', a:['我思故我在'], b:'我可以怀疑一切，但“我在怀疑”这件事本身无法怀疑。',
+  d:'笛卡尔为知识找到的第一个确定点。它把“思考着的主体”放在了哲学的起点，胡塞尔的现象学就是沿着这条路继续走的。', p:['descartes','husserl','sartre'], r:['dualism']},
+ {id:'induction', t:'归纳问题', o:'problem of induction', c:'epi', a:['归纳'], b:'过去一直如此，凭什么保证将来也如此？',
+  d:'休谟指出，从有限的观察推出普遍规律，既不能靠逻辑证明，也不能靠经验证明（那会陷入循环）。波普尔后来用“证伪”来回应。', p:['hume','popper'], r:['falsifiability','empiricism']},
+ {id:'apriori', t:'先天 / 先验', o:'a priori / transcendental', c:'epi', a:['先天','先验'], b:'“先天”指不依赖经验就能成立；“先验”指使经验得以可能的条件。',
+  d:'这两个译名常被混用，是读康德最常见的障碍。先天（a priori）说的是知识的来源；先验（transcendental）说的是追问的层次，即经验何以可能。胡塞尔的“先验自我”沿用后一种意思。', p:['kant','husserl','kripke'], r:['synthetic','thing']},
+ {id:'synthetic', t:'先天综合判断', o:'synthetic a priori', c:'epi', a:['先天综合判断'], b:'既能扩展知识、又具有必然性的判断，比如“7+5=12”。',
+  d:'分析判断只是解释概念（“单身汉都未婚”），综合判断会增加新内容。康德追问：数学和自然科学中那些既必然又扩展知识的判断何以可能？《纯粹理性批判》就是对此的回答。', p:['kant','quine'], r:['apriori','analytic']},
+ {id:'copernican', t:'哥白尼式革命', o:'Kopernikanische Wende', c:'epi', a:['哥白尼式革命'], b:'不是认识去符合对象，而是对象要符合我们的认识形式。',
+  d:'康德借哥白尼（让观察者绕太阳转）作比喻：空间、时间和范畴是心灵加给经验的形式，所以我们对现象能有必然的知识，代价是物自体不可知。', p:['kant'], r:['thing','apriori']},
+ {id:'thing', t:'物自体', o:'Ding an sich', c:'epi', a:['物自体'], b:'事物不依赖我们如何认识它时的“本来样子”。',
+  d:'康德认为我们只能认识显现给我们的现象，物自体可以思考，但不可认识。费希特干脆取消了它，叔本华则把它解读为“意志”。', p:['kant','fichte','schopenhauer'], r:['copernican','will']},
+ {id:'analytic', t:'分析 / 综合之分', o:'analytic–synthetic distinction', c:'epi', a:['分析/综合'], b:'有的句子凭意义就为真，有的要看世界是什么样。',
+  d:'康德和逻辑实证主义都依赖这一区分。蒯因在《经验论的两个教条》中论证，这条界线划不清楚，知识是一张整体接受经验检验的网。', p:['kant','vienna','quine'], r:['synthetic','logpos']},
+
+ {id:'dualism', t:'心物二元论', o:'mind–body dualism', c:'meta', a:['心物二元论','属性二元论','二元论'], b:'心灵和物质是两种根本不同的东西。',
+  d:'笛卡尔区分思维实体与广延实体，由此留下一个难题：两者如何相互作用？这就是贯穿至今的心身问题。查尔莫斯的属性二元论是它的当代版本。', p:['descartes','spinoza','chalmers'], r:['substance','hardproblem']},
+ {id:'substance', t:'实体', o:'substantia', c:'meta', a:['实体'], b:'不依赖别的东西而独立存在的东西。',
+  d:'笛卡尔承认心、物两种实体；斯宾诺莎认为只有一个实体，即神或自然；莱布尼茨认为有无数个精神性的单子。三种答案构成了唯理论形而上学的光谱。', p:['descartes','spinoza','leibniz'], r:['dualism','monad']},
+ {id:'monad', t:'单子', o:'Monade', c:'meta', a:['单子论','单子'], b:'莱布尼茨设想的构成世界的最小精神单元。',
+  d:'单子没有部分，“没有窗户”，彼此不直接作用，却因神的预定和谐而步调一致。德勒兹在《褶子》中重新激活了这一概念。', p:['leibniz','deleuze'], r:['substance']},
+ {id:'absolute', t:'绝对精神', o:'absoluter Geist', c:'meta', a:['绝对精神'], b:'在艺术、宗教、哲学中最终认识到自身的精神。',
+  d:'黑格尔体系的顶点。精神经历主观、客观（法、国家、历史）的阶段，最后在哲学中完全理解自己。历史因此被看作一个有方向、有理性的过程。', p:['hegel'], r:['dialectic','aufheben']},
+ {id:'dialectic', t:'辩证法', o:'Dialektik', c:'meta', a:['辩证法'], b:'事物通过内在矛盾而运动、发展的思维方式。',
+  d:'黑格尔的辩证法：一个概念在展开中暴露出自身的片面，被否定，又在更高层次上被保留（扬弃）。马克思把它用于物质生产与阶级斗争，阿多诺则提出拒绝最终和解的“否定辩证法”。注意：“正—反—合”并不是黑格尔本人的说法。', p:['hegel','marx','adorno','sartre','zizek'], r:['aufheben','histmat']},
+ {id:'aufheben', t:'扬弃', o:'Aufhebung', c:'meta', a:['扬弃'], b:'同时包含“否定、保留、提升”三层意思。',
+  d:'德文 aufheben 本身兼有取消与保存两义。黑格尔用它描述辩证运动：旧阶段不是被简单抛弃，而是作为一个环节保留在新阶段中。', p:['hegel'], r:['dialectic']},
+ {id:'recognition', t:'主奴辩证法', o:'Herrschaft und Knechtschaft', c:'meta', a:['主奴辩证法'], b:'自我意识只有在被另一个自我意识承认时才能确立。',
+  d:'《精神现象学》中的著名段落：为争取承认的生死斗争产生了主人与奴隶，但奴隶通过劳动改造世界，反而获得了真正的独立。经科耶夫的讲解，它深刻影响了拉康、萨特和波伏娃。', p:['hegel','lacan','sartre','beauvoir'], r:['other']},
+ {id:'ontology', t:'存在论 / 本体论', o:'ontology', c:'meta', a:['基础存在论','本体论承诺','存在论','本体论'], b:'研究“存在”本身，以及世界上到底有什么的学问。',
+  d:'同一个词有“本体论”“存在论”两种译法。海德格尔追问存在的意义，称自己的工作为基础存在论；蒯因则用“本体论承诺”来问：一个理论要求我们承认哪些东西存在。', p:['heidegger','quine','levinas','merleau'], r:['dasein','ontodiff']},
+ {id:'ontodiff', t:'存在论差异', o:'ontologische Differenz', c:'meta', a:['存在论差异'], b:'“存在”本身不同于任何一个“存在者”。',
+  d:'海德格尔认为，西方形而上学总是把存在理解为某种最高的存在者（神、实体、主体），从而遗忘了存在本身。这是理解他全部思想的钥匙。', p:['heidegger','derrida','levinas'], r:['ontology','dasein']},
+ {id:'will', t:'生命意志 / 权力意志', o:'Wille zum Leben / Wille zur Macht', c:'meta', a:['生命意志','权力意志'], b:'叔本华：驱动万物的盲目欲求；尼采：不断自我超越、创造价值的力量。',
+  d:'叔本华把康德的物自体解读为意志，由此得出悲观主义：意志永不满足，所以人生即痛苦。尼采接过“意志”，却把它从否定转为肯定：生命的本性就是增长与扩张。', p:['schopenhauer','nietzsche','freud'], r:['thing','nihilism']},
+ {id:'duree', t:'绵延', o:'durée', c:'meta', a:['绵延'], b:'被体验到的时间：连续、不可分割、彼此渗透。',
+  d:'柏格森区分钟表那种可测量、空间化的时间与意识中流动的时间，认为后者才是真实的时间，只能靠直觉把握。', p:['bergson','deleuze'], r:[]},
+
+ {id:'nihilism', t:'虚无主义 / 上帝已死', o:'Nihilismus / Gott ist tot', c:'exist', a:['上帝已死','上帝之死','虚无主义'], b:'最高价值失去了约束力，“为什么活着”没有了现成的答案。',
+  d:'尼采的“上帝已死”不是一句无神论口号，而是一种文化诊断：支撑欧洲道德的基督教根基已经崩塌。他给出的出路是重估一切价值；加缪给出的出路是在荒诞中反抗。', p:['nietzsche','camus','heidegger'], r:['will','absurd']},
+ {id:'genealogy', t:'谱系学', o:'Genealogie', c:'exist', a:['谱系学'], b:'追溯一种价值或观念是怎样在历史中形成的。',
+  d:'尼采在《论道德的谱系》中揭示，“善恶”观念源于具体的历史与权力关系，而不是永恒真理。福柯把这一方法用于研究监狱、疯癫与性。', p:['nietzsche','foucault'], r:['discourse','power']},
+ {id:'intentionality', t:'意向性', o:'Intentionalität', c:'exist', a:['意向性'], b:'意识总是“关于某物”的意识。',
+  d:'胡塞尔从老师布伦塔诺那里接过这一概念，作为现象学的核心：看总是看到什么，想总是想着什么。塞尔后来在分析哲学中也以此为题著书。', p:['husserl','sartre','searle'], r:['epoche']},
+ {id:'epoche', t:'悬搁', o:'epoché', c:'exist', a:['悬搁','本质还原'], b:'暂时把“世界是否真实存在”的判断放进括号里。',
+  d:'胡塞尔的方法：不去争论外部世界是否存在，而是专注描述事物如何在意识中显现，进而把握其本质结构。', p:['husserl'], r:['intentionality']},
+ {id:'dasein', t:'此在', o:'Dasein', c:'exist', a:['此在'], b:'海德格尔对“人”的称呼：那个会追问存在的存在者。',
+  d:'德文字面意思是“在此”。海德格尔刻意避开“主体”“意识”等词，强调人首先是在世界之中、与事物和他人打交道、并且终有一死的存在。', p:['heidegger','sartre','arendt'], r:['ontodiff','angst']},
+ {id:'angst', t:'畏', o:'Angst', c:'exist', a:['畏'], b:'没有具体对象的不安，面对的是虚无与自由本身。',
+  d:'“怕”有具体对象，“畏”却无所指。克尔凯郭尔称之为“自由的眩晕”；海德格尔认为，畏让此在直面自身的有限与本真的可能。', p:['kierkegaard','heidegger','sartre'], r:['dasein']},
+ {id:'essence', t:'存在先于本质', o:"l'existence précède l'essence", c:'exist', a:['存在先于本质'], b:'人没有预先规定的本性，是自己的选择造就了自己。',
+  d:'萨特以裁纸刀为例：刀在被造出之前，用途就已确定；人却不同，先存在，再通过行动定义自己。所以人对自己的一切负完全的责任。', p:['sartre','beauvoir'], r:['badfaith']},
+ {id:'badfaith', t:'自欺', o:'mauvaise foi', c:'exist', a:['自欺'], b:'假装自己别无选择，以逃避自由带来的责任。',
+  d:'萨特的例子：咖啡馆侍者过于刻意地“扮演侍者”，仿佛他天生就是侍者。把自己当成物、当成固定的角色，就是自欺。', p:['sartre','beauvoir'], r:['essence']},
+ {id:'absurd', t:'荒诞', o:"l'absurde", c:'exist', a:['荒诞'], b:'人渴望意义，世界却保持沉默，两者之间的冲突。',
+  d:'加缪认为荒诞既不在人，也不在世界，而在两者的关系中。面对荒诞，自杀和“信仰之跃”都是逃避，唯一诚实的态度是清醒地反抗，就像推石上山的西西弗。', p:['camus','kierkegaard'], r:['nihilism']},
+ {id:'other', t:'他者', o:"l'Autre", c:'exist', a:['他者'], b:'与“我”不同、不能被我同化的另一方。',
+  d:'不同哲学家赋予它不同意义：波伏娃指出女性被塑造为男性的他者；列维纳斯认为他者的面孔向我发出无限的伦理要求；拉康区分小他者（镜像中的他人）与大他者（语言与法的秩序）。', p:['levinas','beauvoir','sartre','lacan'], r:['recognition','orders']},
+ {id:'hermeneutics', t:'解释学 / 视域融合', o:'Hermeneutik / Horizontverschmelzung', c:'exist', a:['哲学解释学','视域融合','解释学'], b:'研究理解如何发生；理解是读者的视域与文本的视域彼此交融。',
+  d:'伽达默尔认为我们总是带着传统给予的“成见”去理解，成见不是障碍，而是理解的条件。理解一段历史，就是让过去与现在展开对话。', p:['gadamer','heidegger'], r:[]},
+ {id:'embodiment', t:'身体主体', o:'corps propre', c:'exist', a:['身体现象学'], b:'身体不是被心灵操控的机器，而是我们感知与行动的主体。',
+  d:'梅洛-庞蒂指出，伸手拿杯子时我们并不先计算坐标，身体本身就“知道”世界。这一思路影响了今天的认知科学与人工智能研究。', p:['merleau'], r:['intentionality']},
+
+ {id:'alienation', t:'异化', o:'Entfremdung', c:'social', a:['异化'], b:'人创造出来的东西，反过来变成支配人的陌生力量。',
+  d:'黑格尔用它描述精神的外化；费尔巴哈指出神是人本质的异化；马克思把它落到劳动上：工人与自己的产品、劳动过程、他人乃至自身的本质相疏离。', p:['hegel','feuerbach','marx','lukacs'], r:['reification']},
+ {id:'histmat', t:'历史唯物主义', o:'historischer Materialismus', c:'social', a:['历史唯物主义','唯物史观'], b:'决定历史走向的根本力量是物质生产方式，而不是观念。',
+  d:'马克思“颠倒”了黑格尔：不是意识决定生活，而是生活决定意识。生产力与生产关系的矛盾推动社会形态的更替。', p:['marx','althusser'], r:['base','dialectic']},
+ {id:'base', t:'经济基础与上层建筑', o:'Basis und Überbau', c:'social', a:['经济基础','上层建筑'], b:'经济关系是“地基”，法律、政治、文化是建在其上的“楼层”。',
+  d:'马克思的经典比喻。西方马克思主义者（葛兰西、阿尔都塞）认为上层建筑有相对的独立性，文化与意识形态本身就是斗争的场所。', p:['marx','gramsci','althusser'], r:['histmat','hegemony']},
+ {id:'reification', t:'物化', o:'Verdinglichung', c:'social', a:['物化'], b:'人与人的关系表现为物与物的关系，人也把自己当成物。',
+  d:'卢卡奇把马克思的“商品拜物教”推广到整个意识领域：在资本主义下，一切都被计算、被量化，人们因此难以看清社会的整体。', p:['lukacs','adorno'], r:['alienation','culture']},
+ {id:'hegemony', t:'文化领导权', o:'egemonia', c:'social', a:['文化领导权'], b:'统治者让自己的世界观成为大家的“常识”，从而获得认同。',
+  d:'葛兰西解释了西欧革命为何未能成功：统治不只靠国家暴力，更靠学校、教会、媒体等市民社会中的认同。因此变革需要先在文化上打一场“阵地战”。', p:['gramsci'], r:['ideology','base']},
+ {id:'culture', t:'文化工业', o:'Kulturindustrie', c:'social', a:['文化工业'], b:'把文化当作标准化商品批量生产的体系。',
+  d:'阿多诺与霍克海默认为，电影、流行音乐等以相似的模式重复生产，制造出虚假的个性与满足，使大众安于现状。', p:['adorno','marcuse'], r:['reification','aura']},
+ {id:'aura', t:'灵韵', o:'Aura', c:'social', a:['灵韵'], b:'艺术原作那种“此时此地”、独一无二的在场感。',
+  d:'本雅明指出，照相和电影使艺术可以无限复制，灵韵因此消逝；但他不只是惋惜，也看到复制技术带来的艺术民主化与政治可能。', p:['benjamin'], r:['culture']},
+ {id:'ideology', t:'意识形态 / 询唤', o:'Ideologie / interpellation', c:'social', a:['意识形态','询唤'], b:'让人把某种社会秩序当作理所当然的观念体系；“询唤”是它把个人召唤为主体的方式。',
+  d:'阿尔都塞的例子：警察在街上喊“喂，你！”，你回头的那一刻，就认领了被指派的身份。齐泽克进一步认为，意识形态不在于我们“不知道”，而在于我们明知如此却照样去做。', p:['marx','althusser','zizek','barthes'], r:['hegemony','orders']},
+ {id:'public', t:'公共领域 / 交往理性', o:'Öffentlichkeit / kommunikative Vernunft', c:'social', a:['公共领域','交往理性'], b:'公民自由讨论公共事务的空间；以相互理解而非操控为目的的理性。',
+  d:'哈贝马斯描述了 18 世纪咖啡馆、沙龙和报刊中公共领域的兴起与后来的衰落，并以交往理性对抗只讲效率的工具理性。阿伦特则强调，公共领域是人们以言行彼此显现的空间。', p:['habermas','arendt'], r:['grand']},
+
+ {id:'unconscious', t:'无意识', o:'das Unbewusste', c:'psy', a:['无意识'], b:'心灵中不被意识察觉、却持续影响我们的部分。',
+  d:'弗洛伊德通过梦、口误和症状揭示被压抑的欲望。叔本华与尼采早已预示了这一点；拉康则说无意识“像语言一样被结构”。', p:['freud','lacan','schopenhauer','jung'], r:['id','collective']},
+ {id:'id', t:'本我 · 自我 · 超我', o:'Es · Ich · Über-Ich', c:'psy', a:['本我','超我'], b:'欲望、现实的调节者、内化的道德规范，人格的三个部分。',
+  d:'弗洛伊德晚期的人格模型：本我追求快乐，超我代表父母和社会的禁令，自我在两者与现实之间艰难周旋。', p:['freud'], r:['unconscious']},
+ {id:'collective', t:'集体无意识 / 原型', o:'kollektives Unbewusstes / Archetyp', c:'psy', a:['集体无意识','原型'], b:'全人类共有的、通过神话和梦显现的深层心理模式。',
+  d:'荣格认为，在个人无意识之下，还有“英雄”“母亲”“阴影”等原型，这解释了为什么不同文化的神话惊人地相似。', p:['jung'], r:['unconscious']},
+ {id:'mirror', t:'镜像阶段', o:'stade du miroir', c:'psy', a:['镜像阶段'], b:'婴儿在镜中认出“自己”的形象，从此“我”建立在一个外在的影像之上。',
+  d:'拉康认为，自我的统一感来自对镜像的认同，因此从一开始就是一种误认。这说明“我”并不是心灵天然的中心。', p:['lacan'], r:['orders','other']},
+ {id:'orders', t:'想象界 · 象征界 · 实在界', o:'Imaginaire · Symbolique · Réel', c:'psy', a:['想象—象征—实在','三界'], b:'拉康划分的人类经验的三个维度：影像、语言秩序，以及无法被符号化的剩余。',
+  d:'想象界是认同与镜像的领域；象征界是语言、法律与社会规则（“大他者”）；实在界是二者都无法把握的创伤性内核。齐泽克大量用它分析电影与政治。', p:['lacan','zizek'], r:['mirror','other']},
+
+ {id:'sign', t:'能指 / 所指', o:'signifiant / signifié', c:'lang', a:['能指','所指'], b:'符号的“声音形象”与它所表达的“概念”。',
+  d:'索绪尔指出二者的联系是任意的（“树”这个音与树的概念之间没有天然关系），意义来自符号之间的差异。这一洞见后来被拉康、巴特、德里达各自改造。', p:['saussure','lacan','barthes','derrida'], r:['structuralism']},
+ {id:'structuralism', t:'结构主义 / 后结构主义', o:'structuralisme / post-structuralisme', c:'lang', a:['后结构主义','结构主义'], b:'不看单个要素，而看要素之间的关系系统；后结构主义则质疑这个系统能否封闭而稳定。',
+  d:'结构主义从索绪尔的语言学出发，扩展到人类学、文学和精神分析。1960 年代末，德里达、福柯、德勒兹等人强调结构的不稳定、历史性与权力，被统称为后结构主义。', p:['saussure','levistrauss','barthes','lacan','derrida','foucault','deleuze'], r:['sign','binary']},
+ {id:'binary', t:'二元对立', o:'opposition binaire', c:'lang', a:['二元对立'], b:'用成对的对立概念组织意义，比如生/熟、男/女、言语/文字。',
+  d:'列维-施特劳斯用它分析神话；德里达指出这些对立往往暗含等级（前项高于后项），解构就是揭示并颠覆这种等级。', p:['levistrauss','derrida'], r:['deconstruction']},
+ {id:'deconstruction', t:'解构', o:'déconstruction', c:'lang', a:['解构'], b:'细读文本，揭示它依赖却又压抑的对立与矛盾。',
+  d:'解构不是“破坏”，而是显示一个文本如何在自身内部动摇它所宣称的中心。德里达的解读对象包括柏拉图、卢梭、胡塞尔和索绪尔。', p:['derrida','butler'], r:['differance','binary','logocentrism']},
+ {id:'differance', t:'延异', o:'différance', c:'lang', a:['延异'], b:'意义既在差异中产生，又总是被推迟，永远无法完全到场。',
+  d:'德里达自造的词，在法语中与“差异”（différence）读音相同，只在书写中能够区分。这本身就是对“言语优先于文字”的挑战。', p:['derrida'], r:['deconstruction','logocentrism']},
+ {id:'logocentrism', t:'逻各斯中心主义', o:'logocentrisme', c:'lang', a:['逻各斯中心主义'], b:'相信存在一个可以直接到场的真理或意义中心。',
+  d:'德里达用它概括西方形而上学传统：言语被认为比文字更接近思想，“在场”被当作真理的标志。', p:['derrida'], r:['differance']},
+ {id:'discourse', t:'话语 / 知识考古学', o:'discours / archéologie du savoir', c:'lang', a:['知识考古学','话语'], b:'一个时代规定“什么能说、谁能说、怎样才算真”的规则系统。',
+  d:'福柯不问某个理论是否正确，而问它在什么条件下得以出现。例如“疯癫”在不同时代，被不同的话语构造成不同的对象。', p:['foucault'], r:['power','genealogy']},
+ {id:'power', t:'规训 / 权力-知识', o:'discipline / pouvoir-savoir', c:'lang', a:['全景敞视','规训','权力/知识'], b:'现代权力不靠砍头，而靠监视、考核和规范来塑造“正常”的个体。',
+  d:'福柯以边沁设计的环形监狱为模型：被观看的人不知道自己是否正被观看，于是自我监控。学校、医院、工厂里同样运作着这种权力；权力与知识彼此生产。', p:['foucault','butler'], r:['discourse','genealogy']},
+ {id:'grand', t:'宏大叙事', o:'grand récit', c:'lang', a:['宏大叙事'], b:'为一切知识和历史提供总体意义的“大故事”，比如解放、进步、精神的实现。',
+  d:'利奥塔把“后现代”界定为对元叙事的怀疑：知识不再靠一个总故事获得正当性，而是散布在多样的语言游戏中。', p:['lyotard','habermas'], r:['languagegame','public']},
+ {id:'simulacra', t:'拟像 / 超真实', o:'simulacre / hyperréel', c:'lang', a:['拟像','超真实'], b:'没有原本的复制品；比真实更“真实”的符号世界。',
+  d:'鲍德里亚认为在媒体与消费社会中，影像不再反映现实，而是先于并取代了现实，比如主题乐园和电视新闻所呈现的世界。', p:['baudrillard'], r:[]},
+ {id:'performativity', t:'性别操演', o:'gender performativity', c:'lang', a:['性别操演'], b:'性别不是先天的本质，而是在反复的言行中被“做”出来的。',
+  d:'巴特勒吸收了奥斯汀的“以言行事”、德里达的可重复性与福柯的权力理论：正是一次次遵循规范的实践，制造出看似自然的性别身份。', p:['butler','beauvoir'], r:['power']},
+ {id:'rhizome', t:'块茎', o:'rhizome', c:'lang', a:['块茎'], b:'像草根一样无中心、多入口、可以任意连接的思想模型。',
+  d:'德勒兹与加塔利用“块茎”对抗“树状”的等级结构（一个根、主干、分枝），主张思想与社会组织的多样连接与生成。', p:['deleuze'], r:[]},
+
+ {id:'sense', t:'含义与指称', o:'Sinn und Bedeutung', c:'sci', a:['含义','指称'], b:'一个词指向什么（指称），以及它以什么方式呈现对象（含义）。',
+  d:'弗雷格的例子：“晨星”与“暮星”指称同一颗金星，但含义不同，所以“晨星就是暮星”是一个有信息量的发现。这是现代语言哲学的起点。', p:['frege','russell','kripke'], r:['description']},
+ {id:'description', t:'摹状词理论', o:'theory of descriptions', c:'sci', a:['摹状词理论','摹状词'], b:'把“当今法国国王是秃子”这类句子，分析为“存在且只存在一个……”的逻辑结构。',
+  d:'罗素以此解决“指称不存在的对象”的难题，被誉为哲学分析的典范。克里普克后来反对用摹状词来解释专名。', p:['russell','kripke'], r:['sense','rigid']},
+ {id:'languagegame', t:'语言游戏 / 家族相似', o:'Sprachspiel / Familienähnlichkeit', c:'sci', a:['语言游戏','家族相似'], b:'词语的意义在于它在具体生活活动中的用法；同一个词的各种用法之间只有交错的相似，没有共同本质。',
+  d:'后期维特根斯坦的核心思想。“游戏”一词涵盖下棋、球赛、过家家，它们没有一个共同特征，却像家族成员一样彼此相似。', p:['wittgenstein','lyotard','rorty'], r:['grand']},
+ {id:'logpos', t:'逻辑实证主义', o:'logical positivism', c:'sci', a:['逻辑实证主义','可证实性'], b:'只有能被经验证实的命题（以及逻辑和数学）才有意义。',
+  d:'维也纳学派据此宣布，形而上学、神学乃至伦理判断在认知上“无意义”。但“可证实原则”本身也无法被证实，这成了它的致命难题。', p:['vienna','wittgenstein','quine','popper'], r:['falsifiability','analytic']},
+ {id:'falsifiability', t:'可证伪性', o:'falsifiability', c:'sci', a:['可证伪性','证伪主义','证伪'], b:'一个理论是科学的，当且仅当它有可能被经验反驳。',
+  d:'波普尔的划界标准。相对论做出了可能落空的预测，因此是科学；而一个能解释任何结果的理论，恰恰说明它不可证伪。', p:['popper','kuhn'], r:['induction','paradigm']},
+ {id:'paradigm', t:'范式 / 不可通约', o:'paradigm / incommensurability', c:'sci', a:['范式','不可通约'], b:'一个科学共同体共享的理论、方法与标准；不同范式之间缺乏共同的衡量尺度。',
+  d:'库恩认为常规科学在范式内解题，反常积累导致危机与革命。新旧范式“看到的世界不同”，因此科学进步不是简单的累积。', p:['kuhn','lyotard'], r:['falsifiability']},
+ {id:'rigid', t:'严格指示词 / 可能世界', o:'rigid designator / possible worlds', c:'sci', a:['严格指示词','可能世界'], b:'在一切可能世界中都指向同一对象的词，比如专名“亚里士多德”。',
+  d:'克里普克用可能世界语义学说明：“水是 H₂O”是后天发现的，却是必然的。这打破了“必然就是先天”的传统看法。', p:['kripke','chalmers'], r:['description','apriori']},
+ {id:'functionalism', t:'功能主义', o:'functionalism', c:'sci', a:['功能主义'], b:'心理状态由它所起的作用来定义，而不由它的材质来定义，就像软件之于硬件。',
+  d:'普特南提出“多重可实现性”：疼痛可以在人脑、章鱼的神经乃至硅芯片中实现。它为认知科学与人工智能提供了哲学基础，也招致了中文房间等批评。', p:['putnam','dennett','searle'], r:['chinese','hardproblem']},
+ {id:'chinese', t:'中文房间', o:'Chinese Room', c:'sci', a:['中文房间'], b:'按规则手册摆弄中文符号的人，看起来懂中文，其实一点也不懂。',
+  d:'塞尔的思想实验：计算机只处理句法，而理解需要语义，所以仅靠运行程序不足以产生心灵。它至今仍是“人工智能能否理解”之争的焦点。', p:['searle','dennett'], r:['functionalism']},
+ {id:'hardproblem', t:'意识的困难问题', o:'hard problem of consciousness', c:'sci', a:['困难问题','哲学僵尸'], b:'为什么大脑的物理过程会伴随着“感觉起来像什么”的主观体验？',
+  d:'查尔莫斯区分“容易问题”（解释辨别、注意、报告等功能）与“困难问题”（解释体验本身）。丹尼特认为困难问题只是一种错觉。', p:['chalmers','dennett'], r:['dualism','functionalism']},
+ {id:'pragmatism', t:'实用主义', o:'pragmatism', c:'sci', a:['新实用主义','实用主义'], b:'一个观念的意义与真，要看它在实践中产生什么效果。',
+  d:'美国本土的哲学传统：皮尔士提出意义准则，詹姆斯发展为真理观，杜威用于教育与民主，罗蒂则以此消解“真理符合实在”的传统追求。', p:['peirce','james','dewey','rorty'], r:[]},
+
+ {id:'nature', t:'自然状态', o:'state of nature', c:'pol', a:['自然状态'], b:'设想在国家和法律出现之前，人类会处于怎样的状况。',
+  d:'这是社会契约论的思想实验起点：霍布斯看到战争，洛克看到有自然法约束却不稳定的自由，卢梭看到淳朴自足的自然人。对自然状态的不同设想，决定了各自理想中的国家形态。', p:['hobbes','locke','rousseau'], r:['contract']},
+ {id:'contract', t:'社会契约', o:'social contract', c:'pol', a:['社会契约'], b:'政治权力的正当性来自人们（假想中的）相互同意。',
+  d:'从霍布斯、洛克、卢梭到罗尔斯，契约论追问：理性的人会同意建立什么样的秩序？罗尔斯把它改造为无知之幕下的选择。', p:['hobbes','locke','rousseau','rawls','kant'], r:['nature','veil']},
+ {id:'general', t:'公意', o:'volonté générale', c:'pol', a:['公意'], b:'着眼于共同利益的人民意志，不同于个人私利的简单相加（“众意”）。',
+  d:'卢梭认为，服从公意就是服从自己参与制定的法律，所以仍然是自由的。这一概念既启发了民主理论，也因“强迫人自由”的说法而饱受争议。', p:['rousseau','kant'], r:['contract']},
+ {id:'utilitarianism', t:'功利主义', o:'utilitarianism', c:'pol', a:['功利主义'], b:'行为的对错取决于它能否带来最大多数人的最大幸福。',
+  d:'边沁开创，密尔发展（区分快乐的高低质量）。罗尔斯批评它为了总体幸福可能牺牲少数人，忽视了“人与人之间的分立”。', p:['mill','rawls'], r:['harm']},
+ {id:'harm', t:'伤害原则', o:'harm principle', c:'pol', a:['伤害原则'], b:'社会干涉个人自由的唯一正当理由，是防止他伤害他人。',
+  d:'密尔《论自由》的核心。只关乎自己的行为，哪怕愚蠢，也应当由个人自主决定；思想与言论自由尤其不应被压制。', p:['mill'], r:['utilitarianism']},
+ {id:'veil', t:'无知之幕 / 原初状态', o:'veil of ignorance / original position', c:'pol', a:['无知之幕','原初状态'], b:'在不知道自己的出身、天赋、性别、信仰时，来选择社会的基本规则。',
+  d:'罗尔斯的思想实验：幕后之人不会冒险成为最底层，因此会选择平等的自由原则与差异原则。它把康德的道德自律转化成了一个可操作的选择程序。', p:['rawls','kant'], r:['difference','contract']},
+ {id:'difference', t:'差异原则', o:'difference principle', c:'pol', a:['差异原则'], b:'只有当不平等能让处境最差的人受益时，它才是正当的。',
+  d:'罗尔斯正义第二原则的一部分。它允许有激励作用的收入差距，但以改善最不利者的境况为条件。诺齐克认为它侵犯了人们对自身劳动成果的权利。', p:['rawls','nozick'], r:['veil','minimal']},
+ {id:'minimal', t:'最小国家 / 持有正义', o:'minimal state / entitlement theory', c:'pol', a:['最小国家','持有正义'], b:'国家只负责防止暴力、盗窃和欺诈，并保障契约执行；财产只要来路正当就是正义的。',
+  d:'诺齐克的持有正义包括获取、转让与矫正三个原则。任何超出“守夜人”职能的国家，都会侵犯个人权利。', p:['nozick'], r:['difference']},
+ {id:'banality', t:'平庸之恶', o:'banality of evil', c:'pol', a:['平庸之恶'], b:'巨大的恶可能出自不思考、只服从的普通人，而不是恶魔。',
+  d:'阿伦特旁听纳粹官员艾希曼的审判，发现他并非狂热的恶棍，而是一个满口套话、放弃独立判断的官僚。她由此强调“思考”本身的道德意义。', p:['arendt'], r:['totalitarianism']},
+ {id:'totalitarianism', t:'极权主义', o:'totalitarianism', c:'pol', a:['极权主义'], b:'通过意识形态与恐怖，企图全面控制社会与个人生活的统治形式。',
+  d:'阿伦特认为极权主义是 20 世纪的新现象，不同于传统的专制：它摧毁公共空间，把人变成孤立的、可替换的大众。', p:['arendt'], r:['banality','public']},
+];
+
+/* ==================== 术语自动链接 ==================== */
+const termById = new Map(TERMS.map(t=>[t.id,t]));
+const _alias = [];
+TERMS.forEach(t=>t.a.forEach(a=>_alias.push([a,t.id])));
+_alias.sort((x,y)=>y[0].length-x[0].length);
+const aliasMap = new Map(_alias);
+const termRe = new RegExp(_alias.map(([a])=>a.replace(/[.*+?^${}()|[\]\\\/]/g,'\\$&')).join('|'),'g');
+function linkTerms(s, selfId){
+  return s.replace(termRe, m=>{
+    const id = aliasMap.get(m);
+    return id===selfId ? m : `<span class="term" data-term="${id}">${m}</span>`;
+  });
+}
+
+/* ==================== 世界坐标 ==================== */
+const MAXY = 2030;
+const svg = d3.select('#map');
+let W = window.innerWidth, H = window.innerHeight;
+const gRoot = svg.append('g');
+const gBands = gRoot.append('g');
+const gRegions = gRoot.append('g').attr('class','region-wrap');
+const gLabels = gRoot.append('g');
+const gLinks = gRoot.append('g');
+const gNodes = gRoot.append('g');
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rand = mulberry32(20260924);
+
+/* 非线性时间轴：压缩 17–18 世纪，拉伸 20 世纪 */
+const _seg = [[1570,1750, 170, 460],[1750,1900, 460, 1040],[1900,2035, 1040, 2080]];
+function timeY(y){
+  for(const [a,b,ya,yb] of _seg){ if(y <= b) return ya + (y-a)/(b-a) * (yb-ya); }
+  return 2080;
+}
+const W0 = 2520, H0 = 2140;
+
+const byId = new Map(NODES.map(d=>[d.id,d]));
+const byCamp = {};
+NODES.forEach(d => (byCamp[d.camp] ??= []).push(d));
+NODES.forEach(d => {
+  d.r = 13 + d.imp * 2.4;
+  d.x0 = POS[d.id] + OX;
+  d.y0 = timeY(d.year);
+  d.x = d.x0 + (rand()-.5) * 4;
+  d.y = d.y0 + (rand()-.5) * 4;
+});
+
+/* 世纪分隔带 */
+[[1600,'17 世纪'],[1700,'18 世纪'],[1800,'19 世纪'],[1900,'20 世纪'],[2000,'21 世纪']]
+.forEach(([yr,label])=>{
+  gBands.append('line').attr('class','band').attr('x1',-60).attr('x2',W0+60).attr('y1',timeY(yr)).attr('y2',timeY(yr));
+  gBands.append('text').attr('class','band-label').attr('x',-40).attr('y',timeY(yr)-10).text(label);
+});
+/* 大传统标题 */
+TRADS.forEach(([t,sub,x])=>{
+  gBands.append('text').attr('class','trad').attr('x',x+OX).attr('y',58).text(t);
+  gBands.append('text').attr('class','trad-sub').attr('x',x+OX).attr('y',86).text(sub);
+});
+gBands.append('line').attr('class','trad-axis').attr('x1',60).attr('x2',W0-40).attr('y1',108).attr('y2',108);
+const nowLine = gBands.append('line').attr('class','now-line').attr('x1',-60).attr('x2',W0+60).style('display','none');
+const nowLabel = gBands.append('text').attr('class','now-label').attr('x',W0).attr('text-anchor','end').style('display','none');
+
+const defs = svg.append('defs');
+Object.entries(REL).forEach(([k,v])=>{
+  defs.append('marker').attr('id','arr-'+k).attr('viewBox','0 -5 10 10')
+    .attr('refX',10).attr('refY',0).attr('markerWidth',7).attr('markerHeight',7).attr('orient','auto')
+    .append('path').attr('d','M0,-5L10,0L0,5').attr('fill',v.color);
+});
+
+/* ==================== 布局：固定坐标 + 轻微防重叠 ==================== */
+const links = LINKS.map(l => ({source:byId.get(l.s), target:byId.get(l.t), type:l.type, note:l.note}));
+const _ORDER = {resonance:0, influence:1, critique:2, inherit:3, transform:4};
+links.sort((a,b) => _ORDER[a.type] - _ORDER[b.type]);
+const sim = d3.forceSimulation(NODES)
+  .randomSource(rand)
+  .force('x', d3.forceX(d=>d.x0).strength(0.9))
+  .force('y', d3.forceY(d=>d.y0).strength(0.5))
+  .force('collide', d3.forceCollide(d=>d.r+28).iterations(2))
+  .stop();
+for(let i=0;i<300;i++) sim.tick();
+
+const linkSel = gLinks.selectAll('path').data(links).join('path')
+  .attr('class','link')
+  .attr('stroke', d=>REL[d.type].color)
+  .attr('stroke-width', d=>REL[d.type].width)
+  .attr('stroke-dasharray', d=>REL[d.type].dash);
+
+const nodeSel = gNodes.selectAll('g').data(NODES).join('g').attr('class','node');
+nodeSel.append('circle').attr('class','halo').attr('r', d=>d.r+9);
+nodeSel.append('circle').attr('class','base').attr('r', d=>d.r).attr('fill', d=>CAMP[d.camp].color);
+nodeSel.append('text').attr('class','mono').attr('y',1).text(d=>d.name[0]);
+NODES.forEach(d=>{ defs.append('clipPath').attr('id','clip-'+d.id).append('circle').attr('r', d.r); });
+nodeSel.filter(d=>AVATARS[d.id]).append('image')
+  .attr('href', d=>AVATARS[d.id])
+  .attr('x', d=>-d.r).attr('y', d=>-d.r).attr('width', d=>d.r*2).attr('height', d=>d.r*2)
+  .attr('preserveAspectRatio','xMidYMin slice').attr('clip-path', d=>`url(#clip-${d.id})`)
+  .on('error', function(){ d3.select(this).remove(); });
+nodeSel.append('circle').attr('class','ring').attr('r', d=>d.r).attr('fill','none')
+  .attr('stroke', d=>CAMP[d.camp].color).attr('stroke-width',3);
+nodeSel.filter(d=>d.school).append('circle').attr('r', d=>d.r+6).attr('fill','none')
+  .attr('stroke', d=>CAMP[d.camp].color).attr('stroke-dasharray','3 3');
+nodeSel.append('text').attr('class','lbl').attr('y', d=>d.r+18).text(d=>d.name);
+nodeSel.append('text').attr('class','yrs').attr('y', d=>d.r+32).text(d=>d.years);
+
+/* 阵营区域与标题 */
+defs.append('filter').attr('id','soft').attr('x','-40%').attr('y','-40%').attr('width','180%').attr('height','180%')
+  .append('feGaussianBlur').attr('stdDeviation',14);
+const smoothLine = d3.line().curve(d3.curveCatmullRomClosed.alpha(1));
+const regionPaths = {}, campLabels = {};
+Object.keys(CAMP).forEach(c=>{
+  regionPaths[c] = gRegions.append('path')
+    .attr('fill', CAMP[c].color).attr('fill-opacity',.07)
+    .attr('stroke', CAMP[c].color).attr('stroke-opacity',.28).attr('stroke-width',1.5)
+    .attr('stroke-dasharray','8 6').attr('filter','url(#soft)');
+  campLabels[c] = gLabels.append('text').attr('class','camp-label').attr('fill', CAMP[c].color).attr('fill-opacity',.85).text(CAMP[c].label);
+});
+const laneSel = gLabels.selectAll('text.lane-label').data(LANES).join('text').attr('class','lane-label')
+  .attr('x', d=>d[1]+OX).attr('y', d=>timeY(d[2])-44).text(d=>d[0]);
+
+function arcPath(l){
+  const sx=l.source.x, sy=l.source.y, tx=l.target.x, ty=l.target.y;
+  const dx=tx-sx, dy=ty-sy, dist=Math.hypot(dx,dy)||1;
+  const ux=dx/dist, uy=dy/dist;
+  const x1=sx+ux*(l.source.r+4),  y1=sy+uy*(l.source.r+4);
+  const x2=tx-ux*(l.target.r+12), y2=ty-uy*(l.target.r+12);
+  const dr=dist*1.4;
+  return `M${x1},${y1} A${dr},${dr} 0 0,1 ${x2},${y2}`;
+}
+function baseOp(l){
+  const dist = Math.hypot(l.target.x-l.source.x, l.target.y-l.source.y);
+  let op = Math.max(0.16, Math.min(0.6, 0.6 - (dist-240)/2200));
+  if(l.type==='transform') op += 0.14;
+  if(l.type==='inherit')   op += 0.07;
+  return Math.min(op, 0.8);
+}
+
+/* ==================== 视图状态 ==================== */
+const state = {year:MAXY, types:new Set(Object.keys(REL)), mode:'core', extra:new Set(), path:null, tour:null, term:null};
+let selectedId = null, hoverId = null;
+const inMode = d => state.mode==='full' || CORE.has(d.id) || state.extra.has(d.id);
+const nodeVisible = d => d.year <= state.year && inMode(d);
+const linkVisible = l => state.types.has(l.type) && nodeVisible(l.source) && nodeVisible(l.target);
+
+/* 自定义阵营标题位置（避免与节点重叠）：[dx, dy] 相对阵营最早节点 */
+const CAMP_LABEL_ADJ = {marxism:[150,34], german:[0,0], political:[0,0], psycho:[0,0], structure:[0,-14]};
+function updateRegions(){
+  Object.keys(CAMP).forEach(c=>{
+    const ns = byCamp[c].filter(nodeVisible);
+    if(!ns.length){ regionPaths[c].attr('d',null); campLabels[c].style('display','none'); return; }
+    const pts = [];
+    ns.forEach(d=>{ const p = d.r + 40; pts.push([d.x-p,d.y],[d.x+p,d.y],[d.x,d.y-p],[d.x,d.y+p+24]); });
+    const hull = d3.polygonHull(pts);
+    if(hull) regionPaths[c].attr('d', smoothLine(hull));
+    const top = d3.min(ns, d=>d.y - d.r);
+    const [ax,ay] = CAMP_LABEL_ADJ[c] || [0,0];
+    const hasLane = c==='analytic' || c==='existential' || c==='structure';
+    campLabels[c].style('display',null)
+      .attr('x', d3.mean(ns,d=>d.x) + ax)
+      .attr('y', top - (hasLane ? 62 : 22) + ay);
+  });
+  laneSel.style('display', d => NODES.some(n=>nodeVisible(n) && Math.abs(n.x0-(d[1]+OX))<60 && n.year>=d[2]) ? null : 'none');
+}
+
+function ticked(){
+  links.forEach(l => l.op = baseOp(l));
+  linkSel.attr('d', arcPath);
+  nodeSel.attr('transform', d=>`translate(${d.x},${d.y})`);
+  updateRegions();
+  applyHighlight();
+}
+sim.on('tick', ticked);
+
+function visibleNeighbors(id){
+  const s = new Set();
+  links.forEach(l=>{
+    if(!linkVisible(l)) return;
+    if(l.source.id===id) s.add(l.target.id);
+    if(l.target.id===id) s.add(l.source.id);
+  });
+  return s;
+}
+
+function applyHighlight(){
+  const id = hoverId || selectedId;
+  let nodeOn = null, linkOn = null;
+  if(hoverId || (selectedId && !state.path)){
+    nodeOn = visibleNeighbors(id); nodeOn.add(id);
+    linkOn = l => l.source.id===id || l.target.id===id;
+  }else if(state.path){
+    nodeOn = new Set(state.path.nodes);
+    linkOn = l => state.path.links.has(l);
+  }else if(state.term){
+    nodeOn = new Set(termById.get(state.term).p);
+    linkOn = l => nodeOn.has(l.source.id) && nodeOn.has(l.target.id);
+  }
+  svg.classed('focused', !!nodeOn);
+  nodeSel.classed('dim', d => nodeOn && !nodeOn.has(d.id))
+         .classed('hl',  d => d.id===id)
+         .classed('gone', d => !inMode(d))
+         .classed('future', d => inMode(d) && d.year > state.year)
+         .classed('visited', d => !!state.tour && state.tour.visited.has(d.id));
+  linkSel.style('display', l => linkVisible(l) ? null : 'none')
+         .classed('hl', l => !!nodeOn && linkOn(l))
+         .attr('stroke-opacity', l => !nodeOn ? l.op : (linkOn(l) ? 1 : 0.04))
+         .attr('marker-end', l => (nodeOn && !linkOn(l)) ? null : `url(#arr-${l.type})`)
+         .attr('stroke-width', l => REL[l.type].width + (state.path && state.path.links.has(l) ? 2 : 0));
+}
+
+function refresh(){
+  const all = state.year >= MAXY;
+  document.getElementById('year-label').textContent = all ? '全部年代' : `至 ${state.year} 年`;
+  nowLine.style('display', all?'none':null).attr('y1',timeY(state.year)).attr('y2',timeY(state.year));
+  nowLabel.style('display', all?'none':null).attr('y',timeY(state.year)-10).text(state.year);
+  updateRegions();
+  applyHighlight();
+}
+
+/* ==================== 缩放 ==================== */
+const zoom = d3.zoom().scaleExtent([0.12, 4]).on('zoom', e => gRoot.attr('transform', e.transform));
+const panel = document.getElementById('panel');
+const glossary = document.getElementById('glossary');
+const isMobile = () => W < 760;
+function viewBox(){
+  /* 可视区域（扣除两侧抽屉与上下控件） */
+  const left = (!isMobile() && glossary.classList.contains('open')) ? 400 : 0;
+  const right = (!isMobile() && panel.classList.contains('open')) ? 360 : 0;
+  const top = W < 1180 ? 130 : 100, bottom = 80;
+  let h = H - top - bottom;
+  if(isMobile() && panel.classList.contains('open')) h = H*0.42 - top;
+  return {x:left, y:top, w:W-left-right, h:Math.max(h,120)};
+}
+function fitTransform(){
+  const ns = NODES.filter(nodeVisible);
+  const x0 = Math.min(d3.min(ns,d=>d.x)-80, 60), x1 = Math.max(d3.max(ns,d=>d.x)+80, W0-60);
+  const y0 = 30, y1 = d3.max(ns,d=>d.y)+70;
+  const v = viewBox();
+  const k = Math.min(v.w/(x1-x0), v.h/(y1-y0), 1.2);
+  return d3.zoomIdentity.translate(v.x + (v.w-(x1-x0)*k)/2 - x0*k, v.y + (v.h-(y1-y0)*k)/2 - y0*k).scale(k);
+}
+svg.call(zoom).on('dblclick.zoom', null);
+svg.call(zoom.transform, fitTransform());
+ticked();
+
+function panTo(d, k=1.1){
+  const v = viewBox();
+  svg.transition().duration(700).call(zoom.transform, d3.zoomIdentity.translate(v.x+v.w/2 - d.x*k, v.y+v.h/2 - d.y*k).scale(k));
+}
+function fitNodes(ids){
+  const xs = ids.map(id=>byId.get(id));
+  const [x0,x1] = d3.extent(xs,d=>d.x), [y0,y1] = d3.extent(xs,d=>d.y);
+  const v = viewBox();
+  const k = Math.min(1.1, 0.85*Math.min(v.w/(x1-x0+220), v.h/(y1-y0+220)));
+  svg.transition().duration(800).call(zoom.transform,
+    d3.zoomIdentity.translate(v.x+v.w/2 - (x0+x1)/2*k, v.y+v.h/2 - (y0+y1)/2*k).scale(k));
+}
+
+/* ==================== 拖动 ==================== */
+nodeSel.call(d3.drag()
+  .on('start', (e,d)=>{ e.sourceEvent.stopPropagation(); sim.alphaTarget(0.2).restart(); d.fx=d.x; d.fy=d.y; })
+  .on('drag',  (e,d)=>{ d.fx=e.x; d.fy=e.y; })
+  .on('end',   ()=>{ sim.alphaTarget(0); })
+);
+nodeSel.on('dblclick', (e,d)=>{ d.fx=null; d.fy=null; sim.alpha(0.3).restart(); e.stopPropagation(); });
+
+/* ==================== 提示 ==================== */
+const tooltip = d3.select('#tooltip');
+function showTip(e, html){
+  tooltip.style('display','block').html(html);
+  moveTip(e);
+}
+function moveTip(e){ tooltip.style('left',Math.min(e.clientX+16, W-310)+'px').style('top',Math.min(e.clientY+16, H-120)+'px'); }
+function hideTip(){ tooltip.style('display','none'); }
+linkSel
+  .on('mouseenter', function(e,l){
+    d3.select(this).attr('stroke-width', REL[l.type].width+1.5).attr('stroke-opacity',1);
+    showTip(e, `<div class="tt-head">${relSentence(l)} <span style="color:${REL[l.type].color}">（${REL[l.type].name}）</span></div>${l.note}`);
+  })
+  .on('mousemove', moveTip)
+  .on('mouseleave', ()=>{ hideTip(); applyHighlight(); });
+
+nodeSel
+  .on('mouseenter', (e,d)=>{ if(isMobile()) return; hoverId=d.id; applyHighlight(); showTip(e, `<div class="tt-head"><b>${d.name}</b> · ${d.years}</div>${d.q}`); })
+  .on('mousemove', moveTip)
+  .on('mouseleave', ()=>{ hoverId=null; applyHighlight(); hideTip(); })
+  .on('click', (e,d)=>{ e.stopPropagation(); hideTip(); openPanel(d); });
+
+svg.on('click', ()=> { if(!state.tour) closePanel(); });
+
+/* 行内术语：悬停看白话，点击打开术语表 */
+document.addEventListener('mouseover', e=>{
+  const el = e.target.closest && e.target.closest('.term');
+  if(!el) return;
+  const t = termById.get(el.dataset.term);
+  showTip(e, `<div class="tt-head"><b>${t.t}</b> <span style="color:var(--dim)">${t.o}</span></div>${t.b}<div style="color:var(--gold);font-size:11px;margin-top:4px">点击查看详解</div>`);
+});
+document.addEventListener('mouseout', e=>{ if(e.target.closest && e.target.closest('.term')) hideTip(); });
+document.addEventListener('click', e=>{
+  const el = e.target.closest && e.target.closest('.term');
+  if(el){ e.stopPropagation(); hideTip(); openGlossary(el.dataset.term); }
+}, true);
+
+/* ==================== 通用小部件 ==================== */
+function avatarHtml(d, cls='av'){
+  return AVATARS[d.id]
+    ? `<img class="${cls}" src="${AVATARS[d.id]}" alt="">`
+    : `<div class="${cls} av-mono" style="background:${CAMP[d.camp].color}">${d.name[0]}</div>`;
+}
+const personChip = id => { const d = byId.get(id); return `<span class="chip" data-person="${id}"><i style="background:${CAMP[d.camp].color}"></i>${d.name}${CORE.has(id)?'':'<small>·完整</small>'}</span>`; };
+const termChip = id => `<span class="chip t" data-term-chip="${id}">${termById.get(id).t}</span>`;
+function bindChips(root){
+  root.querySelectorAll('[data-person]').forEach(el=> el.onclick = e=>{
+    e.stopPropagation();
+    if(isMobile()){ glossary.classList.remove('open'); }
+    closeOverlays();
+    focusNode(byId.get(el.dataset.person));
+  });
+  root.querySelectorAll('[data-term-chip]').forEach(el=> el.onclick = e=>{ e.stopPropagation(); openGlossary(el.dataset.termChip); });
+  root.querySelectorAll('[data-debate]').forEach(el=> el.onclick = e=>{ e.stopPropagation(); openDebate(+el.dataset.debate); });
+}
+
+/* ==================== 人物面板 ==================== */
+const panelContent = document.getElementById('panel-content');
+document.getElementById('panel-close').onclick = ()=> { endTour(); closePanel(); };
+
+function relCard(l){
+  return `<div class="rel" data-other="${l.source.id===selectedId ? l.target.id : l.source.id}">
+    <span class="tag" style="color:${REL[l.type].color};border-color:${REL[l.type].color}">${REL[l.type].name}</span>
+    ${relSentence(l)}<div class="note">${linkTerms(l.note)}</div></div>`;
+}
+
+function openPanel(d){
+  selectedId = d.id; state.path = null; applyHighlight();
+  try{ history.replaceState(null,'','#'+d.id); }catch(_){}
+  const mine = links.filter(l=>l.source.id===d.id || l.target.id===d.id);
+  const incoming = mine.filter(l=>l.target.id===d.id);
+  const outgoing = mine.filter(l=>l.source.id===d.id);
+  const others = NODES.filter(n=>n.id!==d.id).sort((a,b)=>a.year-b.year);
+  const terms = TERMS.filter(t=>t.p.includes(d.id));
+  const debates = DEBATES.map((x,i)=>[x,i]).filter(([x])=>x.a===d.id || x.b===d.id);
+  panelContent.innerHTML = `
+    <div class="p-head">
+      ${avatarHtml(d)}
+      <div>
+        <span class="p-camp" style="background:${CAMP[d.camp].color}">${CAMP[d.camp].name}</span>
+        <h2>${d.name}</h2>
+        <div class="p-en">${d.en} · ${d.years}</div>
+      </div>
+    </div>
+    <div class="p-q"><small>他在追问</small>${linkTerms(d.q)}</div>
+    <h3>核心思想</h3>
+    <ul>${d.ideas.map(i=>`<li>${linkTerms(i)}</li>`).join('')}</ul>
+    ${terms.length ? `<h3>关键术语</h3><div class="chips">${terms.map(t=>termChip(t.id)).join('')}</div>` : ''}
+    ${debates.length ? `<h3>参与的争论</h3><div class="chips">${debates.map(([x,i])=>`<span class="chip" data-debate="${i}">⚔ ${x.title}</span>`).join('')}</div>` : ''}
+    <h3>代表著作</h3>
+    <ul>${d.works.map(w=>`<li class="w">${w}</li>`).join('')}</ul>
+    <h3>思想关系</h3>
+    ${incoming.length ? `<div class="sub">思想来源 · ${incoming.length}</div>${incoming.map(relCard).join('')}` : ''}
+    ${outgoing.length ? `<div class="sub">影响所及 · ${outgoing.length}</div>${outgoing.map(relCard).join('')}` : ''}
+    <h3>追溯思想路径</h3>
+    <div class="pathfind">
+      <select id="path-to">${others.map(n=>`<option value="${n.id}">${n.name}（${n.years}）</option>`).join('')}</select>
+      <button class="pill" id="path-go">查找</button>
+    </div>
+    <div id="path-result"></div>
+    <h3>延伸阅读</h3>
+    <div class="links">
+      <a target="_blank" rel="noopener" href="https://plato.stanford.edu/search/searcher.py?query=${encodeURIComponent(d.en)}">斯坦福哲学百科 ↗</a>
+      <a target="_blank" rel="noopener" href="https://zh.wikipedia.org/w/index.php?search=${encodeURIComponent(d.name)}">维基百科 ↗</a>
+    </div>`;
+  panel.classList.add('open');
+  panel.scrollTop = 0;
+  panelContent.querySelectorAll('.rel').forEach(el=>{
+    el.onclick = e=>{ if(e.target.closest('.term')) return; const t = byId.get(el.dataset.other); if(t) focusNode(t); };
+  });
+  bindChips(panelContent);
+  document.getElementById('path-go').onclick = ()=>{
+    renderPath(findPath(d.id, document.getElementById('path-to').value));
+  };
+}
+function closePanel(){
+  selectedId = null; state.path = null; applyHighlight();
+  panel.classList.remove('open');
+  try{ history.replaceState(null,'',location.pathname); }catch(_){}
+}
+function ensureVisible(d){
+  let changed = false;
+  if(d.year > state.year){ state.year = MAXY; yearInput.value = MAXY; changed = true; }
+  if(!inMode(d)){ setMode('full', false); changed = true; }
+  if(changed) refresh();
+}
+function focusNode(d){
+  ensureVisible(d);
+  openPanel(d);
+  panTo(d);
+}
+
+/* ==================== 思想路径 ==================== */
+function findPath(aId, bId){
+  const adj = new Map();
+  links.filter(linkVisible).forEach(l=>{
+    [[l.source.id,l.target.id],[l.target.id,l.source.id]].forEach(([x,y])=>{
+      (adj.get(x) ?? adj.set(x,[]).get(x)).push({to:y, link:l});
+    });
+  });
+  const prev = new Map([[aId,null]]), q = [aId];
+  while(q.length){
+    const x = q.shift(); if(x===bId) break;
+    for(const e of adj.get(x) || []) if(!prev.has(e.to)){ prev.set(e.to,{from:x,link:e.link}); q.push(e.to); }
+  }
+  if(!prev.has(bId)) return null;
+  const steps = []; let cur = bId;
+  while(prev.get(cur)){ const p = prev.get(cur); steps.unshift(p.link); cur = p.from; }
+  const ns = [aId]; cur = aId;
+  steps.forEach(l=>{ cur = l.source.id===cur ? l.target.id : l.source.id; ns.push(cur); });
+  return {nodes:ns, links:new Set(steps), steps};
+}
+function renderPath(res){
+  const box = document.getElementById('path-result');
+  if(!res){ box.innerHTML = `<div class="note">在当前视图下，两人之间没有找到关联路径。${state.mode==='core'?'试试切换到“完整”模式。':''}</div>`; return; }
+  state.path = res; applyHighlight();
+  box.innerHTML = `<div class="note" style="margin:8px 0">共 ${res.steps.length} 步，地图上已高亮显示：</div>` +
+    res.steps.map((l,i)=>`<div class="step"><span class="n">${i+1}</span><div>${relSentence(l)}<div class="note">${linkTerms(l.note)}</div></div></div>`).join('') +
+    `<button class="pill" id="path-clear" style="margin-top:10px">清除路径</button>`;
+  box.querySelectorAll('.step b').forEach(b=> b.onclick = ()=> panTo(byId.get(b.dataset.id), 0.9));
+  document.getElementById('path-clear').onclick = ()=>{ state.path=null; box.innerHTML=''; applyHighlight(); };
+  fitNodes(res.nodes);
+}
+
+/* ==================== 下拉菜单 ==================== */
+function setupMenu(btnId, menuId, items, onPick){
+  const btn = document.getElementById(btnId), menu = document.getElementById(menuId);
+  menu.innerHTML = items.map((it,i)=>`<div class="ti" data-i="${i}"><b>${it[0]}</b><div>${it[1]}</div></div>`).join('');
+  btn.onclick = e => { e.stopPropagation(); document.querySelectorAll('.menu.open').forEach(m=>m!==menu&&m.classList.remove('open')); menu.classList.toggle('open'); };
+  menu.querySelectorAll('.ti').forEach(el=> el.onclick = ()=>{ menu.classList.remove('open'); onPick(+el.dataset.i); });
+}
+document.addEventListener('click', e=>{ if(!e.target.closest('.dd')) document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open')); });
+
+/* ==================== 专题导览 ==================== */
+const tourCard = document.getElementById('tour-card');
+setupMenu('tour-btn','tour-menu', TOURS.map(t=>[t.title, `${t.sub} · ${t.steps.length} 站`]), startTour);
+
+function startTour(i){
+  closeOverlays();
+  state.tour = {t:TOURS[i], i:0, visited:new Set()};
+  state.extra = new Set(TOURS[i].steps.map(s=>s.id));
+  state.types = new Set(Object.keys(REL)); syncLegend();
+  document.body.classList.add('touring');
+  showStep();
+}
+function showStep(){
+  const {t,i} = state.tour, step = t.steps[i], d = byId.get(step.id);
+  state.tour.visited = new Set(t.steps.slice(0,i+1).map(s=>s.id));
+  focusNode(d);
+  const v = viewBox();
+  tourCard.style.left = isMobile() ? '' : `${v.x + v.w/2}px`;
+  tourCard.innerHTML = `
+    <div class="tc-top"><span>专题导览 · ${t.title}</span><span>${i+1} / ${t.steps.length}</span></div>
+    <div class="tc-name">${d.name} <span style="font-size:12px;color:var(--dim);letter-spacing:0">${d.years}</span></div>
+    <div class="tc-text">${linkTerms(step.text)}</div>
+    <div class="dots">${t.steps.map((_,j)=>`<i class="${j<=i?'on':''}"></i>`).join('')}</div>
+    <div class="btns">
+      <button class="pill" id="tc-exit">结束</button>
+      ${i>0 ? '<button class="pill" id="tc-prev">上一站</button>' : ''}
+      <button class="pill on" id="tc-next">${i<t.steps.length-1 ? '下一站' : '完成'}</button>
+    </div>`;
+  tourCard.classList.add('open');
+  document.getElementById('tc-exit').onclick = endTour;
+  const prev = document.getElementById('tc-prev');
+  if(prev) prev.onclick = ()=>{ state.tour.i--; showStep(); };
+  document.getElementById('tc-next').onclick = ()=>{
+    if(state.tour.i < t.steps.length-1){ state.tour.i++; showStep(); } else endTour();
+  };
+  applyHighlight();
+}
+function endTour(){
+  if(!state.tour) return;
+  state.tour = null; state.extra = new Set();
+  tourCard.classList.remove('open'); document.body.classList.remove('touring');
+  refresh();
+}
+
+/* ==================== 争论对照 ==================== */
+const debateEl = document.getElementById('debate');
+const debateContent = document.getElementById('debate-content');
+setupMenu('debate-btn','debate-menu', DEBATES.map(x=>[x.title, x.q]), openDebate);
+function debateSide(d, S){
+  return `<div class="db-side" style="border-top-color:${CAMP[d.camp].color}">
+    <div class="db-who" data-person="${d.id}">${avatarHtml(d)}<div><b>${d.name}</b><span>${d.years} · ${CAMP[d.camp].name}</span></div></div>
+    <div class="db-claim">${linkTerms(S.claim)}</div>
+    <ul>${S.args.map(a=>`<li>${linkTerms(a)}</li>`).join('')}</ul>
+  </div>`;
+}
+function openDebate(i){
+  const x = DEBATES[i], a = byId.get(x.a), b = byId.get(x.b);
+  document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open'));
+  debateContent.innerHTML = `
+    <div class="db-kicker">争论对照 · ${i+1} / ${DEBATES.length}</div>
+    <div class="db-title">${x.title}</div>
+    <div class="db-q">${linkTerms(x.q)}</div>
+    <div class="db-cols">${debateSide(a,x.A)}<div class="db-vs">VS</div>${debateSide(b,x.B)}</div>
+    <div class="db-box"><b>分歧的关键</b>${linkTerms(x.crux)}</div>
+    <div class="db-box"><b>后来</b>${linkTerms(x.after)}</div>
+    <div class="db-box think"><b>想一想</b>${x.think}</div>
+    <div class="btns">
+      ${i>0?`<button class="pill" data-debate="${i-1}">← 上一组</button>`:''}
+      ${i<DEBATES.length-1?`<button class="pill" data-debate="${i+1}">下一组 →</button>`:''}
+      <button class="pill on" id="db-map">在地图上查看</button>
+    </div>`;
+  debateEl.classList.add('open');
+  debateEl.querySelector('.box').scrollTop = 0;
+  bindChips(debateContent);
+  document.getElementById('db-map').onclick = ()=>{
+    debateEl.classList.remove('open');
+    [a,b].forEach(ensureVisible);
+    closePanel();
+    const direct = links.filter(l=>(l.source===a&&l.target===b)||(l.source===b&&l.target===a));
+    state.path = {nodes:[a.id,b.id], links:new Set(direct)};
+    applyHighlight();
+    fitNodes([a.id,b.id]);
+  };
+}
+
+/* ==================== 术语表 ==================== */
+const gList = document.getElementById('g-list'), gSearch = document.getElementById('g-search'), gCats = document.getElementById('g-cats');
+let gCat = 'all';
+gCats.innerHTML = `<span data-c="all" class="on">全部 ${TERMS.length}</span>` + Object.entries(TERM_CATS).map(([k,v])=>`<span data-c="${k}">${v}</span>`).join('');
+gCats.querySelectorAll('span').forEach(el=> el.onclick = ()=>{ gCat = el.dataset.c; gCats.querySelectorAll('span').forEach(s=>s.classList.toggle('on', s===el)); renderGlossary(); });
+gSearch.oninput = ()=> renderGlossary();
+
+function termMatches(t, q){
+  if(!q) return true;
+  const ql = q.toLowerCase();
+  return t.t.includes(q) || t.o.toLowerCase().includes(ql) || t.a.some(a=>a.includes(q)) || t.b.includes(q)
+      || t.p.some(id=>byId.get(id).name.includes(q));
+}
+function renderGlossary(){
+  const q = gSearch.value.trim();
+  const list = TERMS.filter(t => (gCat==='all' || t.c===gCat) && termMatches(t,q));
+  const groups = {};
+  list.forEach(t=> (groups[t.c] ??= []).push(t));
+  gList.innerHTML = Object.keys(TERM_CATS).filter(c=>groups[c]).map(c=>
+    `<div class="g-cat-title">${TERM_CATS[c]}</div>` + groups[c].map(t=>{
+      const open = state.term===t.id;
+      return `<div class="g-item ${open?'open':''}" data-id="${t.id}">
+        <div class="g-head"><b>${t.t}</b><span class="g-o">${t.o}</span></div>
+        <div class="g-b">${t.b}</div>
+        ${open ? `<div class="g-d">${linkTerms(t.d, t.id)}</div>
+          <div class="g-lab">相关哲学家（地图上已高亮）</div><div class="chips">${t.p.map(personChip).join('')}</div>
+          ${t.r.length ? `<div class="g-lab">相关术语</div><div class="chips">${t.r.map(termChip).join('')}</div>` : ''}` : ''}
+      </div>`;
+    }).join('')
+  ).join('') || '<div class="note" style="padding:20px">没有找到匹配的术语。</div>';
+  gList.querySelectorAll('.g-item').forEach(el=> el.onclick = e=>{
+    if(e.target.closest('.chip') || e.target.closest('.term')) return;
+    selectTerm(state.term===el.dataset.id ? null : el.dataset.id);
+  });
+  bindChips(gList);
+}
+function selectTerm(id){
+  state.term = id;
+  state.extra = id ? new Set(termById.get(id).p) : (state.tour ? state.extra : new Set());
+  if(id){ selectedId = null; state.path = null; panel.classList.remove('open'); }
+  renderGlossary();
+  refresh();
+  if(id){
+    const el = gList.querySelector(`.g-item[data-id="${id}"]`);
+    if(el) el.scrollIntoView({block:'nearest', behavior:'smooth'});
+    if(!isMobile()) fitNodes(termById.get(id).p.length > 1 ? termById.get(id).p : [termById.get(id).p[0], termById.get(id).p[0]]);
+  }
+}
+function openGlossary(id){
+  closeOverlays();
+  glossary.classList.add('open');
+  if(id){
+    const t = termById.get(id);
+    if(gCat!=='all' && t.c!==gCat){ gCat='all'; gCats.querySelectorAll('span').forEach(s=>s.classList.toggle('on', s.dataset.c==='all')); }
+    if(gSearch.value && !termMatches(t, gSearch.value.trim())) gSearch.value = '';
+    selectTerm(id);
+  }else renderGlossary();
+}
+function closeGlossary(){
+  glossary.classList.remove('open');
+  if(state.term){ state.term = null; if(!state.tour) state.extra = new Set(); refresh(); }
+}
+document.getElementById('gloss-btn').onclick = ()=> glossary.classList.contains('open') ? closeGlossary() : openGlossary();
+document.getElementById('gloss-close').onclick = closeGlossary;
+
+/* ==================== 入门 / 完整 ==================== */
+const modeEl = document.getElementById('mode');
+modeEl.innerHTML = `<button data-m="core" class="on" title="只显示 30 位核心人物">入门 · ${CORE.size}</button><button data-m="full" title="显示全部人物">完整 · ${NODES.length}</button>`;
+function setMode(m, refit=true){
+  state.mode = m;
+  modeEl.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.m===m));
+  refresh();
+  if(refit && !selectedId) svg.transition().duration(600).call(zoom.transform, fitTransform());
+}
+modeEl.querySelectorAll('button').forEach(b=> b.onclick = ()=> setMode(b.dataset.m));
+
+/* ==================== 时间轴 ==================== */
+const yearInput = document.getElementById('year');
+const playBtn = document.getElementById('play');
+let playTimer = null;
+yearInput.oninput = ()=>{ state.year = +yearInput.value; refresh(); };
+function stopPlay(){ clearInterval(playTimer); playTimer=null; playBtn.textContent='▶'; }
+playBtn.onclick = ()=>{
+  if(playTimer){ stopPlay(); return; }
+  if(state.year >= MAXY) state.year = 1580;
+  playBtn.textContent = '❚❚';
+  playTimer = setInterval(()=>{
+    state.year = Math.min(MAXY, state.year + 2);
+    yearInput.value = state.year; refresh();
+    if(state.year >= MAXY) stopPlay();
+  }, 50);
+};
+
+/* ==================== 图例 ==================== */
+const legendRel = document.getElementById('legend-rel');
+legendRel.innerHTML = Object.entries(REL).map(([k,v])=>`<span data-type="${k}"><span class="sw ${k}"></span>${v.name}</span>`).join('');
+function syncLegend(){
+  legendRel.querySelectorAll('[data-type]').forEach(el=> el.classList.toggle('off', !state.types.has(el.dataset.type)));
+  applyHighlight();
+}
+legendRel.querySelectorAll('[data-type]').forEach(el=> el.onclick = ()=>{
+  const k = el.dataset.type;
+  state.types.has(k) ? state.types.delete(k) : state.types.add(k);
+  if(!state.types.size) Object.keys(REL).forEach(t=>state.types.add(t));
+  syncLegend();
+});
+document.getElementById('legend-toggle').onclick = ()=> document.getElementById('legend').classList.toggle('open');
+
+/* ==================== 其他控件 ==================== */
+function closeOverlays(){ document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); }
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.onclick = e => { if(e.target===o || e.target.closest('[data-close]')) o.classList.remove('open'); };
+});
+document.getElementById('about-btn').onclick = ()=> document.getElementById('about').classList.add('open');
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeOverlays(); } });
+
+document.getElementById('reset').onclick = ()=>{
+  NODES.forEach(d=>{ d.fx=null; d.fy=null; });
+  sim.alpha(0.5).restart();
+  endTour(); stopPlay(); closeGlossary();
+  state.year = MAXY; yearInput.value = MAXY;
+  state.types = new Set(Object.keys(REL)); syncLegend();
+  closePanel();
+  setMode(state.mode);
+};
+
+const datalist = document.getElementById('names');
+NODES.forEach(d=>{ const o = document.createElement('option'); o.value = d.name; o.label = d.en; datalist.appendChild(o); });
+function doSearch(v){
+  v = v.trim(); if(!v) return;
+  const lv = v.toLowerCase();
+  const d = NODES.find(n=>n.name===v) || NODES.find(n=> n.name.includes(v) || n.en.toLowerCase().includes(lv));
+  if(d){ endTour(); focusNode(d); return; }
+  const t = TERMS.find(t=>t.t.includes(v) || t.a.includes(v) || t.o.toLowerCase().includes(lv));
+  if(t) openGlossary(t.id);
+}
+document.getElementById('search').addEventListener('change', e=>{ doSearch(e.target.value); e.target.blur(); });
+
+window.addEventListener('resize', ()=>{
+  W = window.innerWidth; H = window.innerHeight;
+  if(!selectedId) svg.call(zoom.transform, fitTransform());
+});
+
+const initId = decodeURIComponent(location.hash.slice(1));
+if(byId.has(initId)) setTimeout(()=> focusNode(byId.get(initId)), 300);
+</script>
+</body>
+</html>
