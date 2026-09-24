@@ -22,7 +22,9 @@
 
 ## 使用
 
-用浏览器直接打开 `index.html` 即可，不需要安装任何东西。也可以在本目录启动一个本地服务器：
+**在线访问：<https://jackjimmy.github.io/philosophy-map/>**
+
+也可以下载后用浏览器直接打开 `index.html`，不需要安装任何东西。也可以在本目录启动一个本地服务器：
 
 ```bash
 python3 -m http.server
@@ -52,3 +54,10 @@ python3 -m http.server
 - 原稿：[@Jackjimmy](https://github.com/Jackjimmy)
 - 修订与扩展：Claude（Anthropic）
 - 可视化库：[D3.js](https://d3js.org)（ISC License）
+
+## 许可证
+
+除下列第三方内容外，本项目（页面代码、人物概述、术语解释、争论梳理等全部文字）采用 [知识共享 署名-相同方式共享 4.0 国际许可协议（CC BY-SA 4.0）](https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans)，全文见 [`LICENSE`](LICENSE)。转载或改编时请署名，改编后的作品也须以相同协议发布。
+
+- `d3.v7.min.js`：D3.js，© Mike Bostock，ISC License
+- `avatars/` 中的图片：各自沿用原作者的授权，见 [`avatars/CREDITS.md`](avatars/CREDITS.md)
